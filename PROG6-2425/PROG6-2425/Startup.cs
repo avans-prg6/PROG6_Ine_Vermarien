@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PROG6_2425.Data;
+using PROG6_2425.Repositories;
 
 public class Startup
 {
@@ -17,7 +18,7 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddControllersWithViews();
-
+        
         // DbContext
         services.AddDbContext<BeestFeestDbContext>(options =>
             options.UseSqlServer(_configuration.GetConnectionString("DefaultConnection")));
@@ -31,14 +32,10 @@ public class Startup
             (options => 
             { 
                 options.SignIn.RequireConfirmedAccount = false; 
-                // options.Password.RequireDigit = false; 
-                // options.Password.RequiredLength = 6; 
-                // options.Password.RequireNonAlphanumeric = false; 
-                // options.Password.RequireUppercase = false; 
-                // options.Password.RequireLowercase = false; 
             }) 
             .AddEntityFrameworkStores<BeestFeestDbContext>();
-
+            
+        services.AddScoped<IAccountRepository, AccountRepository>();
     }
 
     // Configure middleware (HTTP pipeline)
