@@ -1,51 +1,64 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using PROG6_2425.Repositories;
 using PROG6_2425.ViewModels;
 
 namespace PROG6_2425.Controllers;
 
 public class AccountController : Controller
 {
-    private readonly SignInManager<IdentityUser> _signInManager;
     private readonly UserManager<IdentityUser> _userManager;
+    private readonly IAccountRepository _accountRepository;
+    private readonly SignInManager<IdentityUser> _signInManager;
+    
 
-    public AccountController(
-        UserManager<IdentityUser> userManager,
-        SignInManager<IdentityUser> signInManager)
+    public AccountController(UserManager<IdentityUser> userManager, IAccountRepository accountRepository, SignInManager<IdentityUser> signInManager)
     {
         _userManager = userManager;
+        _accountRepository = accountRepository;
         _signInManager = signInManager;
     }
 
-    public IActionResult Register()
+    public async Task<IActionResult> CreateAccount()
     {
-        return View();
+        var viewModel = new AccountBeheerVM
+        {
+            KlantenKaartTypes = await _accountRepository.GetKlantenKaartTypesAsync()
+        };
+        return View(viewModel);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Register(RegisterVM Input)
+    public async Task<IActionResult> CreateAccount(AccountBeheerVM model)
     {
-        if (ModelState.IsValid)
+        // Aanmaken van account en klantenkaart
+        string errorMessage = string.Empty;
+        var wachtwoord = GenerateRandomPassword();
+        var success = await _accountRepository.CreateAccountAsync(model, wachtwoord);
+
+        if (success)
         {
-            var user = new IdentityUser { UserName = Input.Email, Email = Input.Email };
-            var result = await _userManager.CreateAsync(user, Input.Password);
-            if (result.Succeeded)
-            {
-                //_logger.LogInformation("User created a new account with password.");
-
-                await _signInManager.SignInAsync(user, isPersistent: false);
-                return LocalRedirect("/");
-            }
-
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
+            TempData["Wachtwoord"] = wachtwoord;
+            return RedirectToAction("CreateAccount");
         }
-
-        return View();
+        else
+        {
+            ModelState.AddModelError(string.Empty, "er is een fout opgetreden tijdens het aanmaken van een account");
+            return View(model);
+        }
     }
-
+    
+    private string GenerateRandomPassword()
+    {
+        // Password generation logic
+        var passwordLength = 12;
+        var random = new Random();
+        const string validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()";
+        return new string(Enumerable.Range(1, passwordLength)
+            .Select(_ => validChars[random.Next(validChars.Length)])
+            .ToArray());
+    }
+    
     public IActionResult Login()
     {
         return View();
