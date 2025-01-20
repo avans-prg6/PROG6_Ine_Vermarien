@@ -1,0 +1,36 @@
+﻿@model PROG6_2425.ViewModels.BeestjeVM
+
+<h2>Beestje Bewerken</h2>
+
+<form asp-action="Edit" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <input type="hidden" asp-for="BeestjeId" />
+
+    <div class="form-group">
+        <label asp-for="Naam" class="control-label">Naam</label>
+        <input asp-for="Naam" class="form-control" />
+        <span asp-validation-for="Naam" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Type" class="control-label">Type</label>
+        <textarea asp-for="Type" class="form-control"></textarea>
+        <span asp-validation-for="Type" class="text-danger"></span>
+    </div>
+    
+     <div class="form-group">
+            <label asp-for="Prijs" class="control-label">Prijs</label>
+            <textarea asp-for="Prijs" class="form-control"></textarea>
+            <span asp-validation-for="Prijs" class="text-danger"></span>
+        </div>
+
+    <div class="form-group">
+        <label asp-for="AfbeeldingUrl" class="control-label">Afbeelding (URL of Pad)</label>
+        <input asp-for="AfbeeldingUrl" class="form-control" />
+        <span asp-validation-for="AfbeeldingUrl" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Opslaan</button>
+    <a asp-action="Index" class="btn btn-secondary">Annuleren</a>
+</form>
