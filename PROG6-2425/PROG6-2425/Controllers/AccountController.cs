@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using PROG6_2425.Repositories;
 using PROG6_2425.ViewModels;
@@ -19,6 +20,31 @@ public class AccountController : Controller
         _signInManager = signInManager;
     }
 
+    public IActionResult Register()
+    {
+        return View();
+    }
+    public async Task<IActionResult> Register(RegisterVM input)
+    {
+        if (ModelState.IsValid)
+        {
+            var user = new IdentityUser { UserName = input.Email, Email = input.Email };
+            var result = await _userManager.CreateAsync(user, input.Password);
+            if (result.Succeeded)
+            {
+                await _signInManager.SignInAsync(user, isPersistent: false);
+                return LocalRedirect("/");
+            }
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+        }
+        return View();
+    }
+    
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateAccount()
     {
         var viewModel = new AccountBeheerVM
@@ -28,10 +54,11 @@ public class AccountController : Controller
         return View(viewModel);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<IActionResult> CreateAccount(AccountBeheerVM model)
     {
-        // Aanmaken van account en klantenkaart
+        // Make account and klantenkaart
         string errorMessage = string.Empty;
         var wachtwoord = GenerateRandomPassword();
         var success = await _accountRepository.CreateAccountAsync(model, wachtwoord);
