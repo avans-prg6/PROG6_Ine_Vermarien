@@ -32,10 +32,12 @@ public class Startup
             (options => 
             { 
                 options.SignIn.RequireConfirmedAccount = false; 
-            }) 
+            })
+            .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<BeestFeestDbContext>();
             
         services.AddScoped<IAccountRepository, AccountRepository>();
+        
     }
 
     // Configure middleware (HTTP pipeline)
@@ -72,6 +74,42 @@ public class Startup
         // Map fallback route
         app.MapFallbackToFile("index.html");
         
+        using (var scope = app.Services.CreateScope())
+        {
+            var serviceProvider = scope.ServiceProvider;
+            SeedRolesAndAdminAsync(serviceProvider).Wait();
+        }
         
+    }
+    
+    private static async Task SeedRolesAndAdminAsync(IServiceProvider serviceProvider)
+    {
+        var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        
+        var adminRole = "Admin";
+        if (!await roleManager.RoleExistsAsync(adminRole))
+        {
+            await roleManager.CreateAsync(new IdentityRole(adminRole));
+        }
+
+        // Add admin if needed
+        var adminEmail = "admin@gmail.com";
+        var adminPassword = "Admin@123";
+        var adminUser = await userManager.FindByEmailAsync(adminEmail);
+        if (adminUser == null)
+        {
+            adminUser = new IdentityUser
+            {
+                UserName = adminEmail,
+                Email = adminEmail,
+                EmailConfirmed = true
+            };
+            var createUserResult = await userManager.CreateAsync(adminUser, adminPassword);
+            if (createUserResult.Succeeded)
+            {
+                await userManager.AddToRoleAsync(adminUser, adminRole);
+            }
+        }
     }
 }

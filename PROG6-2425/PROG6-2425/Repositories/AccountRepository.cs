@@ -33,13 +33,26 @@ public class AccountRepository : IAccountRepository
             UserName = model.Email
         };
 
+        // Create the user
         var result = await _userManager.CreateAsync(user, wachtwoord);
 
-        // Maak een klantenkaart aan en koppel deze aan het account
+        if (!result.Succeeded)
+        {
+            return false; // Exit if user creation fails
+        }
+
+        // Ensure the user exists in the database before proceeding
+        var createdUser = await _userManager.FindByEmailAsync(user.Email);
+
+        if (createdUser == null)
+        {
+            throw new InvalidOperationException("Kon geen gebruiker aanmaken in ASPNETUSERS");
+        }
+
         var klantenKaart = new KlantenKaart
         {
             KlantenKaartTypeId = model.KlantenKaartTypeId,
-            AccountId = user.Id
+            AccountId = createdUser.Id
         };
 
         _dbContext.KlantenKaarten.Add(klantenKaart);
