@@ -1,0 +1,40 @@
+﻿@model IEnumerable<Beestje>
+
+<h2>Beestjes Beheren</h2>
+
+<a asp-action="Create" asp-route-id="/create" class="btn btn-primary btn-sm">Nieuw Beestje</a>
+
+
+<table class="table">
+    <thead>
+    <tr>
+        <th>Naam</th>
+        <th>Type</th>
+        <th>Prijs</th>
+        <th>Afbeelding</th>
+        <th>Verwijderen</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var beestje in Model)
+    {
+        <tr>
+            <td>@beestje.Naam</td>
+            <td>@beestje.Type</td>
+            <td>@beestje.Prijs</td>
+            <td>
+                @if (!string.IsNullOrEmpty(beestje.AfbeeldingUrl))
+                {
+                    <img src="@beestje.AfbeeldingUrl" alt="Afbeelding van @beestje.Naam" style="max-width: 100px; max-height: 100px;"/>
+                }
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@beestje.BeestjeId" class="btn btn-warning btn-sm">Bewerken</a>
+                <form action="@Url.Action("Delete", new { id = beestje.BeestjeId })" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Weet je zeker dat je dit beestje wilt verwijderen?');">Verwijderen</button>
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

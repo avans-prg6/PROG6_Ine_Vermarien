@@ -37,6 +37,8 @@ public class Startup
             .AddEntityFrameworkStores<BeestFeestDbContext>();
             
         services.AddScoped<IAccountRepository, AccountRepository>();
+        services.AddScoped<IBeestjeRepository, BeestjeRepository>();
+
         
     }
 
@@ -82,6 +84,7 @@ public class Startup
         
     }
     
+    // Admin maken maar alleen wanneer er nog geen admin bestaat. Dit wordt elke keer gecheckt
     private static async Task SeedRolesAndAdminAsync(IServiceProvider serviceProvider)
     {
         var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
