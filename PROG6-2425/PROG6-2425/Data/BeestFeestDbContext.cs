@@ -5,7 +5,7 @@ using PROG6_2425.Models;
 
 namespace PROG6_2425.Data;
 
-public class BeestFeestDbContext : IdentityDbContext<IdentityUser, IdentityRole, string>
+public class BeestFeestDbContext : IdentityDbContext<Account, IdentityRole, string>
 {
     public BeestFeestDbContext(DbContextOptions<BeestFeestDbContext> options) : base(options)
     {

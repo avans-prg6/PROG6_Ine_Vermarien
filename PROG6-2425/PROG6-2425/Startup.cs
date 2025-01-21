@@ -29,7 +29,7 @@ public class Startup
         services.AddSwaggerGen();
         
         // identity settings
-        services.AddIdentity<IdentityUser, IdentityRole>
+        services.AddIdentity<Account, IdentityRole>
             (options => 
             { 
                 options.SignIn.RequireConfirmedAccount = false; 
@@ -91,7 +91,7 @@ public class Startup
     private static async Task SeedRolesAndAdminAsync(IServiceProvider serviceProvider)
     {
         var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-        var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var userManager = serviceProvider.GetRequiredService<UserManager<Account>>();
         
         var adminRole = "Admin";
         if (!await roleManager.RoleExistsAsync(adminRole))
@@ -102,14 +102,16 @@ public class Startup
         // Admin opzetten als deze niet bestaat
         var adminEmail = "admin@gmail.com";
         var adminPassword = "Admin@123";
+        var adminPhone = "0612556677";
         var adminUser = await userManager.FindByEmailAsync(adminEmail);
         if (adminUser == null)
         {
-            adminUser = new IdentityUser
+            adminUser = new Account
             {
                 UserName = adminEmail,
                 Email = adminEmail,
-                EmailConfirmed = true
+                EmailConfirmed = true,
+                PhoneNumber = adminPhone
             };
             var createUserResult = await userManager.CreateAsync(adminUser, adminPassword);
             if (createUserResult.Succeeded)

@@ -12,9 +12,9 @@ public class BoekingController : Controller
     private readonly IBeestjeRepository _beestjeRepository;
     private readonly IBoekingRepository _boekingRepository;
     private readonly IAccountRepository _accountRepository;
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly UserManager<Account> _userManager;
 
-    public BoekingController(IBeestjeRepository beestjeRepository, IBoekingRepository boekingRepository, UserManager<IdentityUser> userManager, IAccountRepository accountRepository)
+    public BoekingController(IBeestjeRepository beestjeRepository, IBoekingRepository boekingRepository, UserManager<Account> userManager, IAccountRepository accountRepository)
     {
         _beestjeRepository = beestjeRepository;
         _boekingRepository = boekingRepository;
@@ -33,6 +33,7 @@ public class BoekingController : Controller
             // Stap 1: Laat gebruiker een datum selecteren
             return View(model);
         }
+        
         if (step == 2 && TempData["Datum"].ToString() != "")
         {
             model.Datum = TempData["Datum"] as DateTime?;
@@ -43,7 +44,7 @@ public class BoekingController : Controller
         {
             // Vul gebruikersgegevens in als de gebruiker is ingelogd
             // var gebruiker = await _userManager.FindByNameAsync(User.Identity.Name);
-            var gebruiker = await _accountRepository.GetUserAccountByName(User.Identity.Name);
+            var gebruiker = await _userManager.FindByNameAsync(User.Identity.Name);
             if (gebruiker == null)
             {
                 Console.WriteLine("geen gebruiker gevonde gekkie");
