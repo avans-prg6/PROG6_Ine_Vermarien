@@ -15,9 +15,11 @@ public class BeestFeestDbContext : IdentityDbContext<IdentityUser, IdentityRole,
     public DbSet<Account> Accounts { get; set; }
     public DbSet<Boeking> Boekingen { get; set; }
     public DbSet<KlantenKaart> KlantenKaarten { get; set; }
-    
+
     public DbSet<KlantenKaartType> KlantenKaartTypes { get; set; }
-    
+
+    public DbSet<BeestjeBoeking> BeestjeBoekingen { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -58,7 +60,7 @@ public class BeestFeestDbContext : IdentityDbContext<IdentityUser, IdentityRole,
             .Property(a => a.TelefoonNummer)
             .HasMaxLength(15);
 
-        
+        // Configuratie voor KlantenKaartType
         modelBuilder.Entity<KlantenKaartType>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -66,13 +68,14 @@ public class BeestFeestDbContext : IdentityDbContext<IdentityUser, IdentityRole,
                 .IsRequired()
                 .HasMaxLength(100);
         });
-        
+
         modelBuilder.Entity<KlantenKaartType>().HasData(
             new KlantenKaartType { Id = 1, Naam = "Geen" },
             new KlantenKaartType { Id = 2, Naam = "Zilver" },
             new KlantenKaartType { Id = 3, Naam = "Goud" },
             new KlantenKaartType { Id = 4, Naam = "Platina" }
         );
+
         // Configuratie voor KlantenKaart
         modelBuilder.Entity<KlantenKaart>()
             .HasKey(k => k.Id);
@@ -106,18 +109,48 @@ public class BeestFeestDbContext : IdentityDbContext<IdentityUser, IdentityRole,
             .Property(b => b.KortingPercentage)
             .HasColumnType("decimal(5,2)");
 
-        // Relatie tussen Boeking en Beestje
         modelBuilder.Entity<Boeking>()
-            .HasOne(b => b.Beestje)
+            .Property(b => b.Naam)
+            .IsRequired()
+            .HasMaxLength(100);
+
+        modelBuilder.Entity<Boeking>()
+            .Property(b => b.Adres)
+            .HasMaxLength(255);
+
+        modelBuilder.Entity<Boeking>()
+            .Property(b => b.Email)
+            .HasMaxLength(255);
+
+        modelBuilder.Entity<Boeking>()
+            .Property(b => b.Telefoonnummer)
+            .HasMaxLength(15);
+
+        // Relatie tussen Boeking en BeestjeBoeking (many-to-many)
+        modelBuilder.Entity<BeestjeBoeking>()
+            .HasKey(bb => bb.BeestjeBoekingId);
+
+        modelBuilder.Entity<BeestjeBoeking>()
+            .Property(bb => bb.Prijs)
+            .HasColumnType("decimal(18,2)");
+
+        modelBuilder.Entity<BeestjeBoeking>()
+            .HasOne(bb => bb.Beestje)
             .WithMany(b => b.Boekingen)
-            .HasForeignKey(b => b.BeestjeId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .HasForeignKey(bb => bb.BeestjeId)
+            .OnDelete(DeleteBehavior.Restrict); // Voorkom cascade delete
+
+        modelBuilder.Entity<BeestjeBoeking>()
+            .HasOne(bb => bb.Boeking)
+            .WithMany(b => b.Beestjes)
+            .HasForeignKey(bb => bb.BoekingId)
+            .OnDelete(DeleteBehavior.Cascade); // Verwijder boeking niet als beestje wordt verwijderd
 
         // Relatie tussen Boeking en Account
         modelBuilder.Entity<Boeking>()
             .HasOne(b => b.Account)
-            .WithMany()
+            .WithMany() // Account kan meerdere boekingen hebben
             .HasForeignKey(b => b.AccountId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict); // Voorkom cascade delete als Account wordt verwijderd
     }
 }

@@ -1,0 +1,54 @@
+﻿@model PROG6_2425.ViewModels.BoekingVM
+
+<h2>Boeking Overzicht</h2>
+
+<!-- Stap 1: Datum -->
+<p><strong>Geselecteerde datum:</strong> @(Model.Datum.HasValue ? Model.Datum.Value.ToString("dd-MM-yyyy") : "Geen datum geselecteerd")</p>
+
+<!-- Stap 2: Beschikbare beestjes -->
+<h3>Beschikbare beestjes:</h3>
+@foreach (var beestje in Model.BeschikbareBeestjes)
+{
+    <div>
+        <input type="checkbox" name="selectedBeestjes" value="@beestje.BeestjeId" />
+        <label>@beestje.Naam - @beestje.Prijs.ToString("C")</label>
+    </div>
+}
+
+<!-- Stap 3: Gegevens van de gebruiker (indien ingelogd) -->
+@if (Model.GebruikerId != null)
+{
+    <h3>Gegevens van de gebruiker</h3>
+    <p><strong>Naam:</strong> @Model.Naam</p>
+    <p><strong>Adres:</strong> @Model.Adres</p>
+    <p><strong>Email:</strong> @Model.Email</p>
+    <p><strong>Telefoon:</strong> @Model.Telefoonnummer</p>
+}
+else
+{
+    <h3>Vul je gegevens in</h3>
+    <div>
+        <label for="naam">Naam:</label>
+        <input type="text" id="naam" name="Naam" />
+    </div>
+    <div>
+        <label for="adres">Adres:</label>
+        <input type="text" id="adres" name="Adres" />
+    </div>
+    <div>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="Email" />
+    </div>
+    <div>
+        <label for="telefoonnummer">Telefoonnummer:</label>
+        <input type="text" id="telefoonnummer" name="Telefoonnummer" />
+    </div>
+}
+
+<!-- Totaalprijs -->
+<p><strong>Totaalprijs: </strong>@Model.UiteindelijkePrijs.ToString("C")</p>
+
+<!-- Stap 4: Bevestigen van de boeking -->
+<form action="@Url.Action("Bevestigen", "Boeking")" method="post">
+    <button type="submit">Bevestigen</button>
+</form>

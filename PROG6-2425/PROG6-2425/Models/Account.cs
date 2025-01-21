@@ -9,7 +9,6 @@ public class Account : IdentityUser
     public string Adres { get; set; }
     [Phone]
     public string TelefoonNummer { get; set; }
-    
     public KlantenKaart KlantenKaart { get; set; }
 
 }

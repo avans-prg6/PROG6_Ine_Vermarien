@@ -22,6 +22,18 @@ public class BeestjeRepository : IBeestjeRepository
     {
         return await _dbContext.Beestjes.FindAsync(id);
     }
+    
+    public async Task<IEnumerable<Beestje>> GetBeestjesByIdsAsync(List<int> beestjeIds)
+    {
+        if (beestjeIds == null || !beestjeIds.Any())
+        {
+            return new List<Beestje>();
+        }
+
+        return await _dbContext.Beestjes
+            .Where(beestje => beestjeIds.Contains(beestje.BeestjeId))
+            .ToListAsync();
+    }
 
     public async Task CreateAsync(Beestje beestje)
     {

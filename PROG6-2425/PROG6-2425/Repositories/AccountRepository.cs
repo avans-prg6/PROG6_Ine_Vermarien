@@ -61,8 +61,19 @@ public class AccountRepository : IAccountRepository
         return true;
     }
 
+    public async Task<IdentityUser?> GetUserByNameAsync(string name)
+    {
+        return await _userManager.FindByNameAsync(name);
+    }
+
     public async Task<IdentityUser?> GetUserByEmailAsync(string email)
     {
         return await _userManager.FindByEmailAsync(email);
-    }
+    }  
+    
+    public async Task<Account> GetUserAccountByName(string name)
+    {
+        return await _dbContext.Users.OfType<Account>().FirstOrDefaultAsync(u => u.UserName == name);
+    }  
+    
 }

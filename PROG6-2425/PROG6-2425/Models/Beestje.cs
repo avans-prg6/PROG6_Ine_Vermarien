@@ -10,5 +10,5 @@ public class Beestje
         public decimal Prijs { get; set; }
         public string AfbeeldingUrl { get; set; }
         
-        public ICollection<Boeking> Boekingen { get; set; }
+        public IEnumerable<BeestjeBoeking>? Boekingen { get; set; }
 }

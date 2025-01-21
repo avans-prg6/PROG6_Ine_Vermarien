@@ -6,6 +6,7 @@ public interface IBeestjeRepository
 {
     Task<IEnumerable<Beestje>> GetAllAsync();
     Task<Beestje?> GetByIdAsync(int id);
+    Task<IEnumerable<Beestje>> GetBeestjesByIdsAsync(List<int> beestjeIds);
     Task CreateAsync(Beestje beestje);
     Task UpdateAsync(Beestje beestje);
     Task DeleteAsync(int id);

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using PROG6_2425.Models;
 using PROG6_2425.Repositories;
 using PROG6_2425.ViewModels;
 
@@ -117,4 +118,10 @@ public class AccountController : Controller
         _signInManager.SignOutAsync();
         return LocalRedirect("/Account/Login");
     }
+
+    public async Task<Account?> GetUserAccountById(string id)
+    {
+        return await _accountRepository.GetUserAccountByName(id);
+    }
+
 }

@@ -1,0 +1,84 @@
+﻿@model PROG6_2425.ViewModels.BoekingVM
+
+<div class="row">
+    <div class="col-md-8">
+        @if (Model.CurrentStep == 1)
+        {
+            <h2>Stap 1: Datum selecteren</h2>
+            <form asp-action="BoekingWizard" method="post">
+                <input asp-for="Datum" type="date" class="form-control"/>
+                <input type="hidden" asp-for="CurrentStep" value="1"/>
+                <button type="submit" class="btn btn-primary">Verder</button>
+            </form>
+        }
+        else if (Model.CurrentStep == 2)
+        {
+            <h2>Stap 2: Beestjes selecteren</h2>
+            <form asp-action="BoekingWizard" method="post">
+                <input type="hidden" name="Datum" value="@Model.Datum"/>
+                <ul>
+                    @foreach (var beestje in Model.BeschikbareBeestjes ?? new List<Beestje>())
+                    {
+                        <li>
+                            <input type="checkbox" value="@beestje.BeestjeId" name="GeselecteerdeBeestjes"/>
+                            @beestje.Naam (€@beestje.Prijs)
+                        </li>
+                    }
+                </ul>
+                <input type="hidden" asp-for="CurrentStep" value="2"/>
+                <button type="submit" class="btn btn-primary">Verder</button>
+            </form>
+        }
+        else if (Model.CurrentStep == 3)
+        {
+            <input type="hidden" asp-for="Datum" value="@Model.Datum"/>
+            <input type="hidden" asp-for="GekozenBeestjes" value="@Model.GekozenBeestjes"/>
+
+            <h2>Stap 3: Gegevens invullen</h2>
+            <form asp-action="BoekingWizard" method="post">
+                <input asp-for="Naam" class="form-control" placeholder="Naam"/>
+                <input asp-for="Adres" class="form-control" placeholder="Adres"/>
+                <input asp-for="Email" class="form-control" placeholder="Email"/>
+                <input asp-for="Telefoonnummer" class="form-control" placeholder="Telefoonnummer"/>
+                <input type="hidden" asp-for="CurrentStep" value="3"/>
+                <button type="submit" class="btn btn-primary">Verder</button>
+            </form>
+        }
+        else if (Model.CurrentStep == 4)
+        {
+            <h2>Stap 4: Overzicht</h2>
+            <p>Datum: @Model.Datum</p>
+            <p>Naam: @Model.Naam</p>
+            <p>Beestjes:</p>
+            <ul>
+                @foreach (var beestje in Model.GekozenBeestjes)
+                {
+                    <li>@beestje.Naam</li>
+                }
+            </ul>
+            <p>Totaalprijs: €@Model.UiteindelijkePrijs</p>
+            <form asp-action="BoekingWizard" method="post">
+                <input type="hidden" asp-for="CurrentStep" value="4"/>
+                <button type="submit" class="btn btn-success">Bevestigen</button>
+            </form>
+        }
+    </div>
+    <div class="col-md-4">
+        <h4>Overzicht</h4>
+        <p>Datum: @Model.Datum</p>
+        <p>Beestjes:</p>
+        <ul>
+            @if (Model.GekozenBeestjes != null)
+            {
+                @foreach (var beestje in Model.GekozenBeestjes)
+                {
+                    <li>@beestje.Naam</li>
+                    <li>@beestje.Prijs</li>
+                }
+            }
+            <p>Totaalbedrag: @Model.KortingPercentage</p>
+            <p>Totaalbedrag: @Model.UiteindelijkePrijs</p>
+
+        </ul>
+    </div>
+</div>

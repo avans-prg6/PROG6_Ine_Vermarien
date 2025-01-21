@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PROG6_2425.Data;
+using PROG6_2425.Models;
 using PROG6_2425.Repositories;
 
 public class Startup
@@ -28,18 +29,19 @@ public class Startup
         services.AddSwaggerGen();
         
         // identity settings
-        services.AddDefaultIdentity<IdentityUser> 
+        services.AddIdentity<IdentityUser, IdentityRole>
             (options => 
             { 
                 options.SignIn.RequireConfirmedAccount = false; 
             })
             .AddRoles<IdentityRole>()
-            .AddEntityFrameworkStores<BeestFeestDbContext>();
+            .AddEntityFrameworkStores<BeestFeestDbContext>()
+            .AddDefaultTokenProviders();
             
         services.AddScoped<IAccountRepository, AccountRepository>();
+        services.AddScoped<IBoekingRepository, BoekingRepository>();
         services.AddScoped<IBeestjeRepository, BeestjeRepository>();
 
-        
     }
 
     // Configure middleware (HTTP pipeline)
@@ -65,7 +67,8 @@ public class Startup
         app.UseRouting();
         app.UseAuthentication();
         app.UseAuthorization();
-        
+
+        // app.UseSession();
         // Map controller routes
         app.UseEndpoints(endpoints =>
         {
@@ -96,7 +99,7 @@ public class Startup
             await roleManager.CreateAsync(new IdentityRole(adminRole));
         }
 
-        // Add admin if needed
+        // Admin opzetten als deze niet bestaat
         var adminEmail = "admin@gmail.com";
         var adminPassword = "Admin@123";
         var adminUser = await userManager.FindByEmailAsync(adminEmail);
