@@ -14,114 +14,173 @@ public class BoekingController : Controller
     private readonly IAccountRepository _accountRepository;
     private readonly UserManager<Account> _userManager;
 
-    public BoekingController(IBeestjeRepository beestjeRepository, IBoekingRepository boekingRepository, UserManager<Account> userManager, IAccountRepository accountRepository)
+    public BoekingController(IBeestjeRepository beestjeRepository, IBoekingRepository boekingRepository,
+        UserManager<Account> userManager, IAccountRepository accountRepository)
     {
         _beestjeRepository = beestjeRepository;
         _boekingRepository = boekingRepository;
         _accountRepository = accountRepository;
         _userManager = userManager;
     }
-    
-    [HttpGet]
+
     public async Task<IActionResult> BoekingWizard(int step = 1)
     {
-        var model = new BoekingVM { CurrentStep = step};
-        Console.WriteLine("steppost: "+ model.CurrentStep);
-        if (step == 1)
+        var model = new BoekingVM { CurrentStep = step };
+        Console.WriteLine("steppost: " + model.CurrentStep);
+
+        switch (step)
         {
-            TempData["Datum"] = model.Datum;
-            // Stap 1: Laat gebruiker een datum selecteren
-            return View(model);
+            case 1:
+                return await AddDateAsync(model);
+            case 2:
+                return await AddBeestjesAsync(model);
+            case 3:
+                return await AddAccountInfoAsync(model);
+            case 4:
+                return await ConfirmBoekingAsync(model);
+            default:
+                return View(model);
         }
-        
-        if (step == 2 && TempData["Datum"].ToString() != "")
-        {
-            model.Datum = TempData["Datum"] as DateTime?;
-            IEnumerable<Beestje> beschikbareBeestjes = await _boekingRepository.GetBeestjesByDatumAsync(model.Datum.Value);
-            model.BeschikbareBeestjes = beschikbareBeestjes.ToList();
-        }
-        else if (step == 3 && User.Identity.IsAuthenticated)
-        {
-            // Vul gebruikersgegevens in als de gebruiker is ingelogd
-            // var gebruiker = await _userManager.FindByNameAsync(User.Identity.Name);
-            var gebruiker = await _userManager.FindByNameAsync(User.Identity.Name);
-            if (gebruiker == null)
-            {
-                Console.WriteLine("geen gebruiker gevonde gekkie");
-            }
-            model.Naam = gebruiker.Naam;
-            model.Adres = gebruiker.Adres;
-            model.Email = gebruiker.Email;
-            model.Telefoonnummer = gebruiker.TelefoonNummer;
-        }
-        
-        ViewData["Step"] = step;
-        return View(model);
     }
 
     [HttpPost]
     public async Task<IActionResult> BoekingWizard(BoekingVM model)
     {
-        
         if (model.CurrentStep == 4 && !ModelState.IsValid)
         {
             ViewData["Step"] = model.CurrentStep;
             return View(model);
         }
-        
 
-        if (model.CurrentStep == 1)
+        switch (model.CurrentStep)
         {
-            // Sla de geselecteerde datum op in TempData
-            TempData["Datum"] = model.Datum;
-            model.Datum = TempData["Datum"] as DateTime ?;
-            // Ga naar stap 2
-            return RedirectToAction("BoekingWizard", new { step = 2 });
+            case 1:
+                return await ProcessStep1Async(model);
+            case 2:
+                return await ProcessStep2Async(model);
+            case 3:
+                return await ProcessStep3Async(model);
+            case 4:
+                return await ProcessStep4Async(model);
+            default:
+                return View(model);
         }
-        if (model.CurrentStep == 2)
+    }
+
+    [HttpGet("BoekingWizard/Step1")]
+    private async Task<IActionResult> AddDateAsync(BoekingVM model)
+    {
+        TempData["Datum"] = model.Datum;
+        TempData.Keep("Datum");
+        return View(model);
+    }
+    
+    [HttpPost("BoekingWizard/Step1")]
+    private async Task<IActionResult> ProcessStep1Async(BoekingVM model)
+    {
+        TempData["Datum"] = model.Datum;
+        return RedirectToAction("BoekingWizard", new { step = 2 });
+    }
+
+    [HttpGet("BoekingWizard/Step2")]
+    private async Task<IActionResult> AddBeestjesAsync(BoekingVM model)
+    {
+        if (TempData["Datum"] != null && DateTime.TryParse(TempData["Datum"].ToString(), out DateTime datum))
         {
-            var datum = TempData["Datum"] as DateTime?;
+            model.Datum = datum;
+            var beschikbareBeestjes = await _boekingRepository.GetBeestjesByDatumAsync(datum);
+            model.BeschikbareBeestjes = beschikbareBeestjes.ToList();
+        }
+        else
+        {
+            Console.WriteLine("Geen datum gevonden in TempData");
+        }
+        ViewData["Step"] = 2;
+        return View(model);
+    }
+    
+    [HttpPost("BoekingWizard/Step2")]
+    private async Task<IActionResult> ProcessStep2Async(BoekingVM model)
+    {
+        if (TempData["Datum"] != null && DateTime.TryParse(TempData["Datum"].ToString(), out DateTime datum))
+        {
             TempData.Keep("Datum");
-            if (datum.HasValue)
-            {
-                var beschikbareBeestjes = await _boekingRepository.GetBeestjesByDatumAsync(datum.Value);
-                
-                model.GekozenBeestjes = beschikbareBeestjes.ToList();
-            }
+            var beschikbareBeestjes = await _boekingRepository.GetBeestjesByDatumAsync(datum);
+            model.GekozenBeestjes = beschikbareBeestjes.ToList();
             TempData["Beestjes"] = model.GekozenBeestjes;
             TempData.Keep("Beestjes");
-
-            return RedirectToAction("BoekingWizard", new { step = 3 });
-
         }
 
-        if (model.CurrentStep == 3)
+        return RedirectToAction("BoekingWizard", new { step = 3 });
+    }
+
+    [HttpGet("BoekingWizard/Step3")]
+    private async Task<IActionResult> AddAccountInfoAsync(BoekingVM model)
+    {
+        if (User.Identity.IsAuthenticated)
         {
-            // Stap 3: Vul gegevens in
-            if (User.Identity.IsAuthenticated)
+            TempData.Keep("Datum");
+            TempData.Keep("Beestjes");
+            var gebruiker = await _userManager.FindByNameAsync(User.Identity.Name);
+            if (gebruiker != null)
             {
-                var gebruiker = await _accountRepository.GetUserAccountByName(User.Identity.Name);
                 model.Naam = gebruiker.Naam;
                 model.Adres = gebruiker.Adres;
                 model.Email = gebruiker.Email;
                 model.Telefoonnummer = gebruiker.TelefoonNummer;
             }
-            return RedirectToAction("BoekingWizard", new { step = 4 });
+            else
+            {
+                Console.WriteLine("Gebruiker niet gevonden");
+            }
         }
 
-        if (model.CurrentStep == 4)
-        {
-            // Stap 4: Combineer data en maak boeking
-            var boeking = CreateBoekingFromVM(model);
-
-            return RedirectToAction("Bevestigen", boeking);
-        }
-
+        ViewData["Step"] = 3;
         return View(model);
+    }
+    
+    [HttpPost("BoekingWizard/Step3")]
+    private async Task<IActionResult> ProcessStep3Async(BoekingVM model)
+    {
+        if (User.Identity.IsAuthenticated)
+        {
+            TempData.Keep("Datum");
+            TempData.Keep("Beestjes");
+            var gebruiker = await _accountRepository.GetUserAccountByName(User.Identity.Name);
+            if (gebruiker != null)
+            {
+                model.Naam = gebruiker.Naam;
+                model.Adres = gebruiker.Adres;
+                model.Email = gebruiker.Email;
+                model.Telefoonnummer = gebruiker.TelefoonNummer;
+            }
+        }
+
+        return RedirectToAction("BoekingWizard", new { step = 4 });
+    }
+
+    [HttpGet("BoekingWizard/Step4")]
+    private async Task<IActionResult> ConfirmBoekingAsync(BoekingVM model)
+    {
+        TempData.Keep("Datum");
+        TempData.Keep("Beestjes");
+        ViewData["Step"] = 4;
+        return View(model);
+    }
+
+    [HttpPost("BoekingWizard/Step4")]
+
+    private async Task<IActionResult> ProcessStep4Async(BoekingVM model)
+    {
+        TempData.Keep("Datum");
+        TempData.Keep("Beestjes");
+        var boeking = CreateBoekingFromVM(model);
+        return RedirectToAction("Bevestigen", boeking);
     }
 
     private Boeking CreateBoekingFromVM(BoekingVM model)
     {
+        TempData.Keep("Beestjes");
         var geselecteerdeBeestjes = model.GekozenBeestjes;
 
         return new Boeking
@@ -140,26 +199,26 @@ public class BoekingController : Controller
             }).ToList()
         };
     }
-    
+
     public IActionResult Index()
     {
         return View();
     }
-    
+
     [HttpPost]
     public async Task<IActionResult> Bevestigen(Boeking newBoeking)
     {
         await _boekingRepository.CreateBoekingAsync(newBoeking);
         return RedirectToAction("UserBoekingen");
     }
-    
+
     public async Task<IActionResult> UserBoekingen()
     {
         var user = await _userManager.GetUserAsync(User);
         var boekingen = await _boekingRepository.GetBoekingenByUserId(user.Id);
         return View();
     }
-    
+
     // public async Task<IActionResult> Index(DateTime datum)
     // {
     //     IEnumerable<Beestje> bezetteBeestjes = await _boekingRepository.GetBeestjesByDatumAsync(datum);
@@ -234,5 +293,4 @@ public class BoekingController : Controller
     //     return View(boeking);
     // }
     //
-    
 }
