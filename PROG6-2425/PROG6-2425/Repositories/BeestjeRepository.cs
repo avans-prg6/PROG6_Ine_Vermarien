@@ -13,35 +13,47 @@ public class BeestjeRepository : IBeestjeRepository
         _dbContext = dbContext;
     }
 
-    public async Task<IEnumerable<Beestje>> GetAllAsync()
+    public IEnumerable<Beestje> GetAll()
     {
-        return await _dbContext.Beestjes.ToListAsync();
+        return _dbContext.Beestjes.ToList();
     }
 
-    public async Task<Beestje?> GetByIdAsync(int id)
+    public Beestje GetById(int id)
     {
-        return await _dbContext.Beestjes.FindAsync(id);
+        return _dbContext.Beestjes.Find(id);
+    }
+    
+    public IEnumerable<Beestje> GetBeestjesByIds(List<int> beestjeIds)
+    {
+        if (beestjeIds == null || !beestjeIds.Any())
+        {
+            return new List<Beestje>();
+        }
+
+        return _dbContext.Beestjes
+            .Where(beestje => beestjeIds.Contains(beestje.BeestjeId))
+            .ToList();
     }
 
-    public async Task CreateAsync(Beestje beestje)
+    public void Create(Beestje beestje)
     {
         _dbContext.Beestjes.Add(beestje);
-        await _dbContext.SaveChangesAsync();
+        _dbContext.SaveChanges();
     }
 
-    public async Task UpdateAsync(Beestje beestje)
+    public void Update(Beestje beestje)
     {
         _dbContext.Beestjes.Update(beestje);
-        await _dbContext.SaveChangesAsync();
+        _dbContext.SaveChanges();
     }
 
-    public async Task DeleteAsync(int id)
+    public void Delete(int id)
     {
-        var beestje = await _dbContext.Beestjes.FindAsync(id);
+        var beestje = _dbContext.Beestjes.Find(id);
         if (beestje != null)
         {
             _dbContext.Beestjes.Remove(beestje);
-            await _dbContext.SaveChangesAsync();
+            _dbContext.SaveChanges();
         }
     }
 }

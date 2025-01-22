@@ -9,9 +9,9 @@ namespace PROG6_2425.Repositories;
 public class AccountRepository : IAccountRepository
 {
     private readonly BeestFeestDbContext _dbContext;
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly UserManager<Account> _userManager;
 
-    public AccountRepository(BeestFeestDbContext dbContext, UserManager<IdentityUser> userManager)
+    public AccountRepository(BeestFeestDbContext dbContext, UserManager<Account> userManager)
     {
         _dbContext = dbContext;
         _userManager = userManager;
@@ -56,13 +56,24 @@ public class AccountRepository : IAccountRepository
         };
 
         _dbContext.KlantenKaarten.Add(klantenKaart);
-        await _dbContext.SaveChangesAsync();
+        _dbContext.SaveChangesAsync();
 
         return true;
     }
 
-    public async Task<IdentityUser?> GetUserByEmailAsync(string email)
+    public async Task<Account?> GetUserByNameAsync(string name)
+    {
+        return await _userManager.FindByNameAsync(name);
+    }
+
+    public async Task<Account?> GetUserByEmailAsync(string email)
     {
         return await _userManager.FindByEmailAsync(email);
-    }
+    }  
+    
+    public async Task<Account> GetUserAccountByName(string name)
+    {
+        return await _dbContext.Users.OfType<Account>().FirstOrDefaultAsync(u => u.Id == name);
+    }  
+    
 }

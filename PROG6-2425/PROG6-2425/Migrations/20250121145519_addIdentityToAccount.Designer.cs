@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PROG6_2425.Data;
 
@@ -11,9 +12,10 @@ using PROG6_2425.Data;
 namespace PROG6_2425.Migrations
 {
     [DbContext(typeof(BeestFeestDbContext))]
-    partial class BeestFeestDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250121145519_addIdentityToAccount")]
+    partial class addIdentityToAccount
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

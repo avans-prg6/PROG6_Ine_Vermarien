@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using PROG6_2425.Models;
 using PROG6_2425.Repositories;
 using PROG6_2425.ViewModels;
 
@@ -8,12 +9,12 @@ namespace PROG6_2425.Controllers;
 
 public class AccountController : Controller
 {
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly UserManager<Account> _userManager;
     private readonly IAccountRepository _accountRepository;
-    private readonly SignInManager<IdentityUser> _signInManager;
+    private readonly SignInManager<Account> _signInManager;
     
 
-    public AccountController(UserManager<IdentityUser> userManager, IAccountRepository accountRepository, SignInManager<IdentityUser> signInManager)
+    public AccountController(UserManager<Account> userManager, IAccountRepository accountRepository, SignInManager<Account> signInManager)
     {
         _userManager = userManager;
         _accountRepository = accountRepository;
@@ -28,7 +29,7 @@ public class AccountController : Controller
     {
         if (ModelState.IsValid)
         {
-            var user = new IdentityUser { UserName = input.Email, Email = input.Email };
+            var user = new Account { UserName = input.Email, Email = input.Email };
             var result = await _userManager.CreateAsync(user, input.Password);
             if (result.Succeeded)
             {
@@ -117,4 +118,10 @@ public class AccountController : Controller
         _signInManager.SignOutAsync();
         return LocalRedirect("/Account/Login");
     }
+
+    public async Task<Account?> GetUserAccountById(string id)
+    {
+        return await _accountRepository.GetUserAccountByName(id);
+    }
+
 }

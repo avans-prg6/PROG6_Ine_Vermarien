@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PROG6_2425.Data;
+using PROG6_2425.Models;
 using PROG6_2425.Repositories;
 
 public class Startup
@@ -17,6 +18,15 @@ public class Startup
     // Configure services DI
     public void ConfigureServices(IServiceCollection services)
     {
+        
+        services.AddDistributedMemoryCache(); 
+        services.AddSession(options =>
+        {
+            options.IdleTimeout = TimeSpan.FromMinutes(30);
+            options.Cookie.HttpOnly = true;
+            options.Cookie.IsEssential = true;
+        });
+        
         services.AddControllersWithViews();
         
         // DbContext
@@ -28,18 +38,19 @@ public class Startup
         services.AddSwaggerGen();
         
         // identity settings
-        services.AddDefaultIdentity<IdentityUser> 
+        services.AddIdentity<Account, IdentityRole>
             (options => 
             { 
                 options.SignIn.RequireConfirmedAccount = false; 
             })
             .AddRoles<IdentityRole>()
-            .AddEntityFrameworkStores<BeestFeestDbContext>();
+            .AddEntityFrameworkStores<BeestFeestDbContext>()
+            .AddDefaultTokenProviders();
             
         services.AddScoped<IAccountRepository, AccountRepository>();
+        services.AddScoped<IBoekingRepository, BoekingRepository>();
         services.AddScoped<IBeestjeRepository, BeestjeRepository>();
 
-        
     }
 
     // Configure middleware (HTTP pipeline)
@@ -65,7 +76,8 @@ public class Startup
         app.UseRouting();
         app.UseAuthentication();
         app.UseAuthorization();
-        
+
+        app.UseSession();
         // Map controller routes
         app.UseEndpoints(endpoints =>
         {
@@ -79,40 +91,8 @@ public class Startup
         using (var scope = app.Services.CreateScope())
         {
             var serviceProvider = scope.ServiceProvider;
-            SeedRolesAndAdminAsync(serviceProvider).Wait();
+            SeedData.Initialize(serviceProvider).Wait();
         }
         
-    }
-    
-    // Admin maken maar alleen wanneer er nog geen admin bestaat. Dit wordt elke keer gecheckt
-    private static async Task SeedRolesAndAdminAsync(IServiceProvider serviceProvider)
-    {
-        var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-        var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
-        
-        var adminRole = "Admin";
-        if (!await roleManager.RoleExistsAsync(adminRole))
-        {
-            await roleManager.CreateAsync(new IdentityRole(adminRole));
-        }
-
-        // Add admin if needed
-        var adminEmail = "admin@gmail.com";
-        var adminPassword = "Admin@123";
-        var adminUser = await userManager.FindByEmailAsync(adminEmail);
-        if (adminUser == null)
-        {
-            adminUser = new IdentityUser
-            {
-                UserName = adminEmail,
-                Email = adminEmail,
-                EmailConfirmed = true
-            };
-            var createUserResult = await userManager.CreateAsync(adminUser, adminPassword);
-            if (createUserResult.Succeeded)
-            {
-                await userManager.AddToRoleAsync(adminUser, adminRole);
-            }
-        }
     }
 }

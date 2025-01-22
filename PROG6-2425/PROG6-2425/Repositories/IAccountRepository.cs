@@ -8,5 +8,8 @@ public interface IAccountRepository
 {
     Task<List<KlantenKaartType>> GetKlantenKaartTypesAsync();
     Task<bool> CreateAccountAsync(AccountBeheerVM model, string wachtwoord);
-    Task<IdentityUser?> GetUserByEmailAsync(string email);
+    Task<Account?> GetUserByEmailAsync(string email);
+    Task<Account?> GetUserByNameAsync(string name);
+    Task<Account?> GetUserAccountByName(string name);
+
 }
