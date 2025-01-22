@@ -123,13 +123,16 @@ public class BoekingController : Controller
             if (model.GeselecteerdeBeestjesIds != null && model.GeselecteerdeBeestjesIds.Any())
             {
                 model.GekozenBeestjes = _beestjeRepository.GetBeestjesByIds(model.GeselecteerdeBeestjesIds).ToList();
-
-                // Opslaan in sessie als dat nodig is
+                model.UiteindelijkePrijs = model.GekozenBeestjes.Sum(b => b.Prijs); 
+                
+                // Opslaan in sessie
+                HttpContext.Session.SetString("UiteindelijkePrijs", model.UiteindelijkePrijs.ToString("F2"));
                 var beestjesJson = JsonConvert.SerializeObject(model.GekozenBeestjes);
                 HttpContext.Session.SetString("Beestjes", beestjesJson);
             }
         }
 
+        SaveBoekingVMToSession(model);
         // Ga naar de volgende stap
         return RedirectToAction("BoekingWizard", new { step = 3 });
     }
@@ -189,31 +192,46 @@ public class BoekingController : Controller
                 model.Telefoonnummer = gebruiker.TelefoonNummer;
             }
         }
-        Console.WriteLine("gebruikerid stap 3: " + model.GebruikerId);
         SaveBoekingVMToSession(model);
-
         return RedirectToAction("BoekingWizard", new { step = 4 });
     }
 
     [HttpGet("BoekingWizard/Step4")]
     private IActionResult ConfirmBoeking(BoekingVM model)
     {
-        SaveBoekingVMToSession(model);
+        var beestjesJson = HttpContext.Session.GetString("Beestjes");
+        var datumString = HttpContext.Session.GetString("Datum");
+        var prijsString = HttpContext.Session.GetString("UiteindelijkePrijs");
+        model.GekozenBeestjes = JsonConvert.DeserializeObject<List<Beestje>>(beestjesJson);
+        if (DateTime.TryParse(datumString, out DateTime datum))
+        {
+            model.Datum = datum;
+        }
+        if (decimal.TryParse(prijsString, out decimal uiteindelijkePrijs))
+        {
+            model.UiteindelijkePrijs = uiteindelijkePrijs;
+        }
         return View(model);
     }
 
     [HttpPost("BoekingWizard/Step4")]
     private IActionResult ProcessStep4(BoekingVM model)
     {
-        var datumString = HttpContext.Session.GetString("Datum");
         var beestjesJson = HttpContext.Session.GetString("Beestjes");
+        var datumString = HttpContext.Session.GetString("Datum");
+        var prijsString = HttpContext.Session.GetString("UiteindelijkePrijs");
+
         model = GetBoekingVMFromSession();
 
         model.GekozenBeestjes = JsonConvert.DeserializeObject<List<Beestje>>(beestjesJson);
-
         if (DateTime.TryParse(datumString, out DateTime datum))
         {
             model.Datum = datum;
+        }
+        
+        if (decimal.TryParse(prijsString, out decimal uiteindelijkePrijs))
+        {
+            model.UiteindelijkePrijs = uiteindelijkePrijs;
         }
 
         var boeking = CreateBoekingFromVM(model);
@@ -272,13 +290,10 @@ public class BoekingController : Controller
     public IActionResult Details(int id)
     {
         Boeking boeking = _boekingRepository.GetBoekingById(id);
-        Console.WriteLine("boeking.beestjes: " + boeking.Beestjes);
         BoekingVM boekingVm = BoekingToBoekingVm(boeking);
         
         return View(boekingVm);
     }
-
-
     public IActionResult UserBoekingen()
     {
         var user = _userManager.GetUserAsync(User).Result;
@@ -293,7 +308,6 @@ public class BoekingController : Controller
         return View(boekingVms);
     }
     
-
     public BoekingVM BoekingToBoekingVm(Boeking boeking)
     {
         BoekingVM boekingVm = new BoekingVM
