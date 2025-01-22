@@ -18,6 +18,15 @@ public class Startup
     // Configure services DI
     public void ConfigureServices(IServiceCollection services)
     {
+        
+        services.AddDistributedMemoryCache(); 
+        services.AddSession(options =>
+        {
+            options.IdleTimeout = TimeSpan.FromMinutes(30);
+            options.Cookie.HttpOnly = true;
+            options.Cookie.IsEssential = true;
+        });
+        
         services.AddControllersWithViews();
         
         // DbContext
@@ -68,7 +77,7 @@ public class Startup
         app.UseAuthentication();
         app.UseAuthorization();
 
-        // app.UseSession();
+        app.UseSession();
         // Map controller routes
         app.UseEndpoints(endpoints =>
         {

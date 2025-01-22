@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using PROG6_2425.Models;
 using PROG6_2425.Repositories;
@@ -22,106 +23,136 @@ public class BoekingController : Controller
         _accountRepository = accountRepository;
         _userManager = userManager;
     }
-
-    public async Task<IActionResult> BoekingWizard(int step = 1)
+    
+     private BoekingVM GetBoekingVMFromSession()
     {
-        var model = new BoekingVM { CurrentStep = step };
-        Console.WriteLine("steppost: " + model.CurrentStep);
+        var modelJson = HttpContext.Session.GetString("BoekingVM");
+        if (string.IsNullOrEmpty(modelJson))
+        {
+            return new BoekingVM();
+        }
+
+        return JsonConvert.DeserializeObject<BoekingVM>(modelJson);
+    }
+
+    private void SaveBoekingVMToSession(BoekingVM model)
+    {
+        var modelJson = JsonConvert.SerializeObject(model);
+        HttpContext.Session.SetString("BoekingVM", modelJson);
+    }
+
+    public IActionResult BoekingWizard(int step = 1)
+    {
+        var model = GetBoekingVMFromSession();
+        model.CurrentStep = step;
 
         switch (step)
         {
             case 1:
-                return await AddDateAsync(model);
+                return AddDate(model);
             case 2:
-                return await AddBeestjesAsync(model);
+                return AddBeestjes(model);
             case 3:
-                return await AddAccountInfoAsync(model);
+                return AddAccountInfo(model);
             case 4:
-                return await ConfirmBoekingAsync(model);
+                return ConfirmBoeking(model);
             default:
                 return View(model);
         }
     }
 
     [HttpPost]
-    public async Task<IActionResult> BoekingWizard(BoekingVM model)
+    public IActionResult BoekingWizard(BoekingVM model)
     {
         if (model.CurrentStep == 4 && !ModelState.IsValid)
         {
-            ViewData["Step"] = model.CurrentStep;
-            return View(model);
+            return ProcessStep4(model);
         }
+
+        SaveBoekingVMToSession(model);
 
         switch (model.CurrentStep)
         {
             case 1:
-                return await ProcessStep1Async(model);
+                return ProcessStep1(model);
             case 2:
-                return await ProcessStep2Async(model);
+                return ProcessStep2(model);
             case 3:
-                return await ProcessStep3Async(model);
+                return ProcessStep3(model);
             case 4:
-                return await ProcessStep4Async(model);
+                return ProcessStep4(model);
             default:
                 return View(model);
         }
     }
 
     [HttpGet("BoekingWizard/Step1")]
-    private async Task<IActionResult> AddDateAsync(BoekingVM model)
+    private IActionResult AddDate(BoekingVM model)
     {
-        TempData["Datum"] = model.Datum;
-        TempData.Keep("Datum");
         return View(model);
     }
-    
+
     [HttpPost("BoekingWizard/Step1")]
-    private async Task<IActionResult> ProcessStep1Async(BoekingVM model)
+    private IActionResult ProcessStep1(BoekingVM model)
     {
-        TempData["Datum"] = model.Datum;
+        HttpContext.Session.SetString("Datum", model.Datum.ToString());
+        SaveBoekingVMToSession(model);
         return RedirectToAction("BoekingWizard", new { step = 2 });
     }
 
     [HttpGet("BoekingWizard/Step2")]
-    private async Task<IActionResult> AddBeestjesAsync(BoekingVM model)
+    private IActionResult AddBeestjes(BoekingVM model)
     {
-        if (TempData["Datum"] != null && DateTime.TryParse(TempData["Datum"].ToString(), out DateTime datum))
+        var datumString = HttpContext.Session.GetString("Datum");
+        if (DateTime.TryParse(datumString, out DateTime datum))
         {
             model.Datum = datum;
-            var beschikbareBeestjes = await _boekingRepository.GetBeestjesByDatumAsync(datum);
+            var beschikbareBeestjes = _boekingRepository.GetBeestjesByDatum(datum);
             model.BeschikbareBeestjes = beschikbareBeestjes.ToList();
         }
-        else
-        {
-            Console.WriteLine("Geen datum gevonden in TempData");
-        }
-        ViewData["Step"] = 2;
         return View(model);
     }
-    
+
     [HttpPost("BoekingWizard/Step2")]
-    private async Task<IActionResult> ProcessStep2Async(BoekingVM model)
+    private IActionResult ProcessStep2(BoekingVM model)
     {
-        if (TempData["Datum"] != null && DateTime.TryParse(TempData["Datum"].ToString(), out DateTime datum))
+        var datumString = HttpContext.Session.GetString("Datum");
+        if (DateTime.TryParse(datumString, out DateTime datum))
         {
-            TempData.Keep("Datum");
-            var beschikbareBeestjes = await _boekingRepository.GetBeestjesByDatumAsync(datum);
-            model.GekozenBeestjes = beschikbareBeestjes.ToList();
-            TempData["Beestjes"] = model.GekozenBeestjes;
-            TempData.Keep("Beestjes");
+            // Controleer of er geselecteerde beestjes zijn
+            if (model.GeselecteerdeBeestjesIds != null && model.GeselecteerdeBeestjesIds.Any())
+            {
+                model.GekozenBeestjes = _beestjeRepository.GetBeestjesByIds(model.GeselecteerdeBeestjesIds).ToList();
+
+                // Opslaan in sessie als dat nodig is
+                var beestjesJson = JsonConvert.SerializeObject(model.GekozenBeestjes);
+                HttpContext.Session.SetString("Beestjes", beestjesJson);
+            }
         }
 
+        // Ga naar de volgende stap
         return RedirectToAction("BoekingWizard", new { step = 3 });
     }
 
     [HttpGet("BoekingWizard/Step3")]
-    private async Task<IActionResult> AddAccountInfoAsync(BoekingVM model)
+    private IActionResult AddAccountInfo(BoekingVM model)
     {
+        var beestjesJson = HttpContext.Session.GetString("Beestjes");
+        if (!string.IsNullOrEmpty(beestjesJson))
+        {
+            model.GekozenBeestjes = JsonConvert.DeserializeObject<List<Beestje>>(beestjesJson);
+        }
+
+        string datumString = HttpContext.Session.GetString("Datum");
+
+        if (!datumString.IsNullOrEmpty() && DateTime.TryParse(datumString, out var datum))
+        {
+            model.Datum = datum;
+        }
         if (User.Identity.IsAuthenticated)
         {
-            TempData.Keep("Datum");
-            TempData.Keep("Beestjes");
-            var gebruiker = await _userManager.FindByNameAsync(User.Identity.Name);
+            var gebruiker = _userManager.FindByNameAsync(User.Identity.Name).Result;
+
             if (gebruiker != null)
             {
                 model.Naam = gebruiker.Naam;
@@ -135,18 +166,21 @@ public class BoekingController : Controller
             }
         }
 
-        ViewData["Step"] = 3;
         return View(model);
     }
-    
+
     [HttpPost("BoekingWizard/Step3")]
-    private async Task<IActionResult> ProcessStep3Async(BoekingVM model)
+    private IActionResult ProcessStep3(BoekingVM model)
     {
+        var beestjesJson = HttpContext.Session.GetString("Beestjes");
         if (User.Identity.IsAuthenticated)
         {
-            TempData.Keep("Datum");
-            TempData.Keep("Beestjes");
-            var gebruiker = await _accountRepository.GetUserAccountByName(User.Identity.Name);
+            if (beestjesJson != null)
+            {
+                model.GekozenBeestjes = JsonConvert.DeserializeObject<List<Beestje>>(beestjesJson);
+            }
+            Account gebruiker = _accountRepository.GetUserAccountByName(User.Identity.Name).Result;
+
             if (gebruiker != null)
             {
                 model.Naam = gebruiker.Naam;
@@ -155,34 +189,63 @@ public class BoekingController : Controller
                 model.Telefoonnummer = gebruiker.TelefoonNummer;
             }
         }
+        Console.WriteLine("gebruikerid stap 3: " + model.GebruikerId);
+        SaveBoekingVMToSession(model);
 
         return RedirectToAction("BoekingWizard", new { step = 4 });
     }
 
     [HttpGet("BoekingWizard/Step4")]
-    private async Task<IActionResult> ConfirmBoekingAsync(BoekingVM model)
+    private IActionResult ConfirmBoeking(BoekingVM model)
     {
-        TempData.Keep("Datum");
-        TempData.Keep("Beestjes");
-        ViewData["Step"] = 4;
+        SaveBoekingVMToSession(model);
         return View(model);
     }
 
     [HttpPost("BoekingWizard/Step4")]
-
-    private async Task<IActionResult> ProcessStep4Async(BoekingVM model)
+    private IActionResult ProcessStep4(BoekingVM model)
     {
-        TempData.Keep("Datum");
-        TempData.Keep("Beestjes");
+        var datumString = HttpContext.Session.GetString("Datum");
+        var beestjesJson = HttpContext.Session.GetString("Beestjes");
+        model = GetBoekingVMFromSession();
+
+        model.GekozenBeestjes = JsonConvert.DeserializeObject<List<Beestje>>(beestjesJson);
+
+        if (DateTime.TryParse(datumString, out DateTime datum))
+        {
+            model.Datum = datum;
+        }
+
         var boeking = CreateBoekingFromVM(model);
-        return RedirectToAction("Bevestigen", boeking);
+        Bevestigen(boeking);
+
+        return RedirectToAction("UserBoekingen");
     }
 
     private Boeking CreateBoekingFromVM(BoekingVM model)
     {
-        TempData.Keep("Beestjes");
         var geselecteerdeBeestjes = model.GekozenBeestjes;
+        string userId = _userManager.GetUserId(User);
 
+        if (User.Identity.IsAuthenticated)
+        {
+            return new Boeking
+            {
+                AccountId = userId,
+                Datum = model.Datum.Value,
+                Naam = model.Naam,
+                Adres = model.Adres,
+                Email = model.Email,
+                Telefoonnummer = model.Telefoonnummer,
+                UiteindelijkePrijs = geselecteerdeBeestjes.Sum(b => b.Prijs),
+                Beestjes = geselecteerdeBeestjes.Select(b => new BeestjeBoeking
+                {
+                    BeestjeId = b.BeestjeId,
+                    Naam = b.Naam,
+                    Prijs = b.Prijs
+                }).ToList()
+            };
+        }
         return new Boeking
         {
             Datum = model.Datum.Value,
@@ -200,97 +263,67 @@ public class BoekingController : Controller
         };
     }
 
-    public IActionResult Index()
+    public void Bevestigen(Boeking newBoeking)
     {
-        return View();
+        _boekingRepository.CreateBoeking(newBoeking);
+    }
+    
+    [HttpGet]
+    public IActionResult Details(int id)
+    {
+        Boeking boeking = _boekingRepository.GetBoekingById(id);
+        Console.WriteLine("boeking.beestjes: " + boeking.Beestjes);
+        BoekingVM boekingVm = BoekingToBoekingVm(boeking);
+        
+        return View(boekingVm);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> Bevestigen(Boeking newBoeking)
+
+    public IActionResult UserBoekingen()
     {
-        await _boekingRepository.CreateBoekingAsync(newBoeking);
+        var user = _userManager.GetUserAsync(User).Result;
+        IEnumerable<Boeking> boekingen = _boekingRepository.GetBoekingenByUserId(user.Id);
+        List<BoekingVM> boekingVms = new List<BoekingVM>();
+        foreach (Boeking b in boekingen)
+        {
+            BoekingVM boekingVm = BoekingToBoekingVm(b);
+            boekingVms.Add(boekingVm);
+        }
+        
+        return View(boekingVms);
+    }
+    
+
+    public BoekingVM BoekingToBoekingVm(Boeking boeking)
+    {
+        BoekingVM boekingVm = new BoekingVM
+        {
+            BoekingId = boeking.BoekingId,
+            Datum = boeking.Datum,
+            Naam = boeking.Naam,
+            Adres = boeking.Adres,
+            Email = boeking.Email,
+            Telefoonnummer = boeking.Telefoonnummer,
+            UiteindelijkePrijs = boeking.UiteindelijkePrijs,
+            KortingPercentage = boeking.KortingPercentage,
+            GekozenBeestjes = boeking.Beestjes.Select(bb => bb.Beestje).ToList()
+        };
+        List<int> beestjeIds = new List<int>();
+        foreach (BeestjeBoeking b in boeking.Beestjes)
+        {
+            beestjeIds.Add(b.BeestjeId);
+        }
+        
+        List<Beestje> gekozenBeestjes = _beestjeRepository.GetBeestjesByIds(beestjeIds).ToList();
+        boekingVm.GekozenBeestjes = gekozenBeestjes;
+        return boekingVm;
+    }
+    
+    [HttpPost]
+    public IActionResult Delete(int id)
+    {
+        _boekingRepository.Delete(id);
         return RedirectToAction("UserBoekingen");
     }
-
-    public async Task<IActionResult> UserBoekingen()
-    {
-        var user = await _userManager.GetUserAsync(User);
-        var boekingen = await _boekingRepository.GetBoekingenByUserId(user.Id);
-        return View();
-    }
-
-    // public async Task<IActionResult> Index(DateTime datum)
-    // {
-    //     IEnumerable<Beestje> bezetteBeestjes = await _boekingRepository.GetBeestjesByDatumAsync(datum);
-    //     IEnumerable<Beestje> beschikbareBeestjes = await _beestjeRepository.GetAllAsync();
-    //
-    //     var beschikbareBeestjesFiltered = beschikbareBeestjes
-    //         .Where(b => !bezetteBeestjes.Any(bz => bz.BeestjeId == b.BeestjeId))
-    //         .ToList();
-    //     
-    //     var model = new BoekingVM()
-    //     {
-    //         BeschikbareBeestjes = beschikbareBeestjes,
-    //         Datum = datum
-    //     };
-    //     
-    //     //als gebruiker al is ingelogd gegevens gelijk overnemen
-    //     if (User.Identity.IsAuthenticated)
-    //     {
-    //         Account gebruiker = await _userManager.GetUserAsync(User);
-    //         model.GebruikerId = gebruiker.Id;
-    //         model.Naam = gebruiker.Naam;
-    //         model.Adres = gebruiker.Adres;
-    //         model.Email = gebruiker.Email;
-    //         model.Telefoonnummer = gebruiker.TelefoonNummer;
-    //     }
-    //     
-    //     return View(model);
-    // }
-
-    // [HttpPost]
-    // public IActionResult KiesBeestjes(DateTime datum, List<int> beestjeIds)
-    // {
-    //     // Hier komt de logica om de gekozen beestjes op te slaan
-    //     return RedirectToAction("GegevensInvoeren", new { datum = datum, beestjeIds = string.Join(",", beestjeIds) });
-    // }
-    //
-    // [HttpPost]
-    // public async Task<IActionResult> GegevensInvoeren(BoekingVM model, DateTime datum, string beestjeIds)
-    // {
-    //     if (ModelState.IsValid)
-    //     {
-    //         var beestjeIdsList = beestjeIds.Split(',').Select(int.Parse).ToList();
-    //         var geselecteerdeBeestjes = await _beestjeRepository.GetBeestjesByIdsAsync(beestjeIdsList);
-    //
-    //         var boeking = new Boeking
-    //         {
-    //             Datum = datum,
-    //             Naam = model.Naam,
-    //             Email = model.Email,
-    //             Adres = model.Adres,
-    //             Telefoonnummer = model.Telefoonnummer,
-    //             UiteindelijkePrijs = geselecteerdeBeestjes.Sum(b => b.Prijs),
-    //             Beestjes = geselecteerdeBeestjes.Select(b => new BeestjeBoeking
-    //             {
-    //                 BeestjeId = b.BeestjeId,
-    //                 Naam = b.Naam,
-    //                 Prijs = b.Prijs
-    //             }).ToList()
-    //         };
-    //
-    //         await _boekingRepository.CreateBoekingAsync(boeking);
-    //         return RedirectToAction("Overzicht", new { boekingId = boeking.BoekingId });
-    //     }
-    //
-    //     return View(model);
-    // }
-    //
-    // // Stap 4: Overzicht en bevestigen
-    // public async Task<IActionResult> Overzicht(int boekingId)
-    // {
-    //     var boeking = await _boekingRepository.GetBoekingByIdAsync(boekingId);
-    //     return View(boeking);
-    // }
-    //
 }
+    

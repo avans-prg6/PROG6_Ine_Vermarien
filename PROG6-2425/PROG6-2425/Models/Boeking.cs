@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PROG6_2425.Models;
 
@@ -22,6 +23,7 @@ public class Boeking
 
     
     // Relatie met accounts (gebruikers)
+    [ForeignKey("Account")]
     public string? AccountId { get; set; }
     public Account? Account { get; set; }
 }

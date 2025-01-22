@@ -17,10 +17,10 @@
             <form asp-action="BoekingWizard" method="post">
                 <input type="hidden" name="Datum" value="@Model.Datum"/>
                 <ul>
-                    @foreach (var beestje in Model.BeschikbareBeestjes ?? new List<Beestje>())
+                    @foreach (var beestje in Model.BeschikbareBeestjes)
                     {
                         <li>
-                            <input type="checkbox" value="@beestje.BeestjeId" name="GeselecteerdeBeestjes"/>
+                            <input type="checkbox" value="@beestje.BeestjeId" name="GeselecteerdeBeestjesIds"/>
                             @beestje.Naam (€@beestje.Prijs)
                         </li>
                     }
@@ -33,6 +33,7 @@
         {
             <input type="hidden" asp-for="Datum" value="@Model.Datum"/>
             <input type="hidden" asp-for="GekozenBeestjes" value="@Model.GekozenBeestjes"/>
+            <input type="hidden" asp-for="GekozenBeestjes" value="@Model.GebruikerId"/>
 
             <h2>Stap 3: Gegevens invullen</h2>
             <form asp-action="BoekingWizard" method="post">
@@ -46,14 +47,20 @@
         }
         else if (Model.CurrentStep == 4)
         {
+            <input type="hidden" asp-for="GekozenBeestjes" value="@Model.GekozenBeestjes"/>
+            <input type="hidden" asp-for="Datum" value="@Model.Datum"/>
+            <input type="hidden" asp-for="GekozenBeestjes" value="@Model.GebruikerId"/>
+
             <h2>Stap 4: Overzicht</h2>
             <p>Datum: @Model.Datum</p>
             <p>Naam: @Model.Naam</p>
+            <p>Adres: @Model.Adres</p>
+            <p>Telefoonnummer: @Model.Telefoonnummer</p>
             <p>Beestjes:</p>
             <ul>
                 @foreach (var beestje in Model.GekozenBeestjes)
                 {
-                    <li>@beestje.Naam</li>
+                    <li>@beestje.Naam - €@beestje.Prijs</li>
                 }
             </ul>
             <p>Totaalprijs: €@Model.UiteindelijkePrijs</p>
@@ -63,22 +70,20 @@
             </form>
         }
     </div>
-    <div class="col-md-4">
-        <h4>Overzicht</h4>
-        <p>Datum: @Model.Datum</p>
-        <p>Beestjes:</p>
-        <ul>
-            @if (Model.GekozenBeestjes != null)
-            {
-                @foreach (var beestje in Model.GekozenBeestjes)
+    @if(Model.CurrentStep != 4){
+        <div class="col-md-4">
+            <h4>Overzicht</h4>
+            <p>Datum: @Model.Datum</p>
+            <p>Beestjes:</p>
+            <ul>
+                @if (Model.GekozenBeestjes != null)
                 {
-                    <li>@beestje.Naam</li>
-                    <li>@beestje.Prijs</li>
+                    @foreach (var beestje in Model.GekozenBeestjes)
+                    {
+                        <li>@beestje.Naam - €@beestje.Prijs</li>
+                    }
                 }
-            }
-            <p>Totaalbedrag: @Model.KortingPercentage</p>
-            <p>Totaalbedrag: @Model.UiteindelijkePrijs</p>
-
-        </ul>
-    </div>
+            </ul>
+        </div>
+    }
 </div>

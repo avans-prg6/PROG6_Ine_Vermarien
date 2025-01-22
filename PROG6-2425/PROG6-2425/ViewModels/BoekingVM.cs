@@ -21,6 +21,7 @@ public class BoekingVM
     
     public List<Beestje> BeschikbareBeestjes { get; set; }
     
+    public List<int> GeselecteerdeBeestjesIds { get; set; }
     public List<Beestje> GekozenBeestjes { get; set; }
     
     public int CurrentStep { get; set; } = 1;

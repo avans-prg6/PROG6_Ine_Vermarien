@@ -56,7 +56,7 @@ public class AccountRepository : IAccountRepository
         };
 
         _dbContext.KlantenKaarten.Add(klantenKaart);
-        await _dbContext.SaveChangesAsync();
+        _dbContext.SaveChangesAsync();
 
         return true;
     }

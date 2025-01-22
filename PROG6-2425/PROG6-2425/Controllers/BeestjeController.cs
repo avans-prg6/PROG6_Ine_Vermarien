@@ -17,9 +17,9 @@ public class BeestjeController : Controller
 
     [Authorize(Roles = "Admin")]
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public IActionResult Index()
     {
-        var beestjes = await _beestjeRepository.GetAllAsync();
+        var beestjes = _beestjeRepository.GetAll();
         return View(beestjes);
     }
 
@@ -31,7 +31,7 @@ public class BeestjeController : Controller
     
     [Authorize(Roles = "Admin")]
     [HttpPost]
-    public async Task<IActionResult> Create(BeestjeVM _beestje)
+    public IActionResult Create(BeestjeVM _beestje)
     {
         if (!ModelState.IsValid)
         {
@@ -46,7 +46,7 @@ public class BeestjeController : Controller
             AfbeeldingUrl = _beestje.AfbeeldingUrl
         };
         
-        await _beestjeRepository.CreateAsync(beestje);
+        _beestjeRepository.Create(beestje);
 
 
         TempData["SuccessMessage"] = "Beestje succesvol aangemaakt!";
@@ -55,9 +55,9 @@ public class BeestjeController : Controller
 
     [Authorize(Roles = "Admin")]
     [HttpGet]
-    public async Task<IActionResult> Edit(int id)
+    public IActionResult Edit(int id)
     {
-        Beestje beestje = await _beestjeRepository.GetByIdAsync(id);
+        Beestje beestje = _beestjeRepository.GetById(id);
         if (beestje == null) return NotFound();
 
         // omzetten naar VM
@@ -75,7 +75,7 @@ public class BeestjeController : Controller
 
     [Authorize(Roles = "Admin")]
     [HttpPost]
-    public async Task<IActionResult> Edit(BeestjeVM _beestje)
+    public IActionResult Edit(BeestjeVM _beestje)
     {
         if (!ModelState.IsValid)
         {
@@ -92,7 +92,7 @@ public class BeestjeController : Controller
             AfbeeldingUrl = _beestje.AfbeeldingUrl
         };
 
-        await _beestjeRepository.UpdateAsync(beestje);
+        _beestjeRepository.Update(beestje);
 
         TempData["SuccessMessage"] = "Beestje succesvol bijgewerkt!";
         return RedirectToAction("Index");
@@ -100,15 +100,15 @@ public class BeestjeController : Controller
     
     [Authorize(Roles = "Admin")]
     [HttpPost]
-    public async Task<IActionResult> Delete(int id)
+    public IActionResult Delete(int id)
     {
-        Beestje beestje = await _beestjeRepository.GetByIdAsync(id);
+        Beestje beestje = _beestjeRepository.GetById(id);
         if (beestje == null)
         {
             return NotFound();
         }
 
-        await _beestjeRepository.DeleteAsync(id);
+        _beestjeRepository.Delete(id);
         TempData["SuccessMessage"] = "Beestje is succesvol verwijderd.";
         return RedirectToAction("Index");
     }

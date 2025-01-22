@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using PROG6_2425.Data;
 using PROG6_2425.Models;
+using PROG6_2425.ViewModels;
 
 namespace PROG6_2425.Repositories;
 
@@ -13,46 +15,58 @@ public class BoekingRepository : IBoekingRepository
         _dbContext = dbContext;
     }
 
-    public async Task<Boeking> CreateBoekingAsync(Boeking boeking)
+    // Synchroniseer CreateBoeking
+    public void CreateBoeking(Boeking boeking)
     {
-        await _dbContext.Boekingen.AddAsync(boeking);
-        await _dbContext.SaveChangesAsync();
-        return boeking;
+        _dbContext.Boekingen.Add(boeking);
+        _dbContext.SaveChanges();
     }
-    
-    public async Task<IEnumerable<Beestje>> GetBeestjesByDatumAsync(DateTime datum)
+
+    public IEnumerable<Beestje> GetBeestjesByDatum(DateTime datum)
     {
         // Selecteer alle beestjes die NIET in een boeking staan op de gegeven datum
-        var beschikbareBeestjes = await _dbContext.Beestjes
+        var beschikbareBeestjes = _dbContext.Beestjes
             .Where(b => !_dbContext.Boekingen
                 .Any(bo => bo.Datum == datum && bo.Beestjes
                     .Any(bk => bk.BeestjeId == b.BeestjeId)))
-            .ToListAsync();
+            .ToList();
 
         return beschikbareBeestjes;
     }
 
-    public async Task<IEnumerable<Beestje>> GetAllBeestjesAsync()
+    public List<KlantenKaartType> GetKlantenKaartTypes()
     {
-        return await _dbContext.Beestjes.ToListAsync();
+        return _dbContext.KlantenKaartTypes.ToList();
     }
 
-    public async Task<List<KlantenKaartType>> GetKlantenKaartTypesAsync()
+    public List<Boeking> GetBoekingenByUserId(string id)
     {
-        return await _dbContext.KlantenKaartTypes.ToListAsync();
-    }
-
-    public async Task<IEnumerable<Boeking>> GetBoekingenByUserId(string id)
-    {
-        List<Boeking> boekingen = await _dbContext.Boekingen
+        List<Boeking> boekingen = _dbContext.Boekingen
+            .Include(b => b.Beestjes)
+            .ThenInclude(bb => bb.Beestje)
             .Where(u => u.AccountId == id)
-            .ToListAsync();
+            .ToList();
+
         return boekingen;
     }
 
-    public async Task<Boeking?> GetBoekingById(int id)
+    public void Delete(int boekingId)
     {
-        return await _dbContext.Boekingen.FindAsync(id);
+        var boeking = _dbContext.Boekingen.Find(boekingId);
+
+        if (boeking != null)
+        {
+            _dbContext.Boekingen.Remove(boeking);
+            _dbContext.SaveChanges();
+        }
     }
 
+    public Boeking GetBoekingById(int id)
+    {
+        Boeking boeking = _dbContext.Boekingen
+            .Include(b => b.Beestjes) 
+            .ThenInclude(bb => bb.Beestje) 
+            .FirstOrDefault(b => b.BoekingId == id);
+        return boeking;
+    }
 }
