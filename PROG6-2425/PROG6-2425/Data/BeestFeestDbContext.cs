@@ -69,13 +69,6 @@ public class BeestFeestDbContext : IdentityDbContext<Account, IdentityRole, stri
                 .HasMaxLength(100);
         });
 
-        modelBuilder.Entity<KlantenKaartType>().HasData(
-            new KlantenKaartType { Id = 1, Naam = "Geen" },
-            new KlantenKaartType { Id = 2, Naam = "Zilver" },
-            new KlantenKaartType { Id = 3, Naam = "Goud" },
-            new KlantenKaartType { Id = 4, Naam = "Platina" }
-        );
-
         // Configuratie voor KlantenKaart
         modelBuilder.Entity<KlantenKaart>()
             .HasKey(k => k.Id);
@@ -146,7 +139,6 @@ public class BeestFeestDbContext : IdentityDbContext<Account, IdentityRole, stri
             .HasForeignKey(bb => bb.BoekingId)
             .OnDelete(DeleteBehavior.Cascade); // Verwijder boeking niet als beestje wordt verwijderd
 
-        // Relatie tussen Boeking en Account
         modelBuilder.Entity<Boeking>()
             .HasOne(b => b.Account)
             .WithMany() // Account kan meerdere boekingen hebben

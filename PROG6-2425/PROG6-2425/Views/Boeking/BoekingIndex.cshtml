@@ -32,13 +32,17 @@
                     <td>€@boeking.UiteindelijkePrijs</td>
                     <td>
                         <a asp-action="Details" asp-route-id="@boeking.BoekingId" class="btn btn-info btn-sm">Details</a>
-                        <form asp-action="Delete" asp-route-id="@boeking.BoekingId" method="post" style="display:inline;">
-                            <button type="submit" class="btn btn-danger btn-sm">Verwijderen</button>
-                        </form>
+                        @if (!User.IsInRole("Admin"))
+                        {
+                            <form asp-action="Delete" asp-route-id="@boeking.BoekingId" method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-danger btn-sm">Verwijderen</button>
+                            </form>
+                        }
                     </td>
                 </tr>
             }
             </tbody>
         </table>
     }
+     <a asp-action="BoekingWizard" class="btn btn-info btn-sm">Boeking maken</a>
 </div>

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
@@ -239,7 +240,7 @@ public class BoekingController : Controller
 
         return RedirectToAction("UserBoekingen");
     }
-
+    
     private Boeking CreateBoekingFromVM(BoekingVM model)
     {
         var geselecteerdeBeestjes = model.GekozenBeestjes;
@@ -284,6 +285,7 @@ public class BoekingController : Controller
     public void Bevestigen(Boeking newBoeking)
     {
         _boekingRepository.CreateBoeking(newBoeking);
+        HttpContext.Session.Clear();
     }
     
     [HttpGet]
@@ -294,6 +296,8 @@ public class BoekingController : Controller
         
         return View(boekingVm);
     }
+    
+    [Authorize]
     public IActionResult UserBoekingen()
     {
         var user = _userManager.GetUserAsync(User).Result;
@@ -305,7 +309,23 @@ public class BoekingController : Controller
             boekingVms.Add(boekingVm);
         }
         
-        return View(boekingVms);
+        return View("BoekingIndex", boekingVms);
+    }
+    
+    [Authorize(Roles = "Admin")] 
+    [HttpGet]
+    public IActionResult GetAllBoekingen()
+    {
+        var boekingen = _boekingRepository.GetAllBoekingen(); 
+
+        List<BoekingVM> boekingVms = new List<BoekingVM>();
+        foreach (Boeking b in boekingen)
+        {
+            BoekingVM boekingVm = BoekingToBoekingVm(b);
+            boekingVms.Add(boekingVm);
+        }
+
+        return View("BoekingIndex", boekingVms);
     }
     
     public BoekingVM BoekingToBoekingVm(Boeking boeking)

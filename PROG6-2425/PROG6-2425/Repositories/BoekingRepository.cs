@@ -49,6 +49,13 @@ public class BoekingRepository : IBoekingRepository
 
         return boekingen;
     }
+    public List<Boeking> GetAllBoekingen()
+    {
+        return _dbContext.Boekingen
+            .Include(b => b.Beestjes) 
+            .ThenInclude(bb => bb.Beestje)
+            .ToList();
+    }
 
     public void Delete(int boekingId)
     {

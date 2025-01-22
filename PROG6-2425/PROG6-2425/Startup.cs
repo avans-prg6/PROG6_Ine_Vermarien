@@ -91,42 +91,8 @@ public class Startup
         using (var scope = app.Services.CreateScope())
         {
             var serviceProvider = scope.ServiceProvider;
-            SeedRolesAndAdminAsync(serviceProvider).Wait();
+            SeedData.Initialize(serviceProvider).Wait();
         }
         
-    }
-    
-    // Admin maken maar alleen wanneer er nog geen admin bestaat. Dit wordt elke keer gecheckt
-    private static async Task SeedRolesAndAdminAsync(IServiceProvider serviceProvider)
-    {
-        var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-        var userManager = serviceProvider.GetRequiredService<UserManager<Account>>();
-        
-        var adminRole = "Admin";
-        if (!await roleManager.RoleExistsAsync(adminRole))
-        {
-            await roleManager.CreateAsync(new IdentityRole(adminRole));
-        }
-
-        // Admin opzetten als deze niet bestaat
-        var adminEmail = "admin@gmail.com";
-        var adminPassword = "Admin@123";
-        var adminPhone = "0612556677";
-        var adminUser = await userManager.FindByEmailAsync(adminEmail);
-        if (adminUser == null)
-        {
-            adminUser = new Account
-            {
-                UserName = adminEmail,
-                Email = adminEmail,
-                EmailConfirmed = true,
-                PhoneNumber = adminPhone
-            };
-            var createUserResult = await userManager.CreateAsync(adminUser, adminPassword);
-            if (createUserResult.Succeeded)
-            {
-                await userManager.AddToRoleAsync(adminUser, adminRole);
-            }
-        }
     }
 }
