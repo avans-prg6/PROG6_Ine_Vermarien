@@ -7,7 +7,6 @@ public class Boeking
 {
     public int BoekingId { get; set; }
     public DateTime Datum { get; set; }
-    
     public decimal UiteindelijkePrijs { get; set; }
     public decimal KortingPercentage { get; set; }
     

@@ -1,25 +1,60 @@
 ﻿@model PROG6_2425.ViewModels.BoekingVM
+
 <div class="card shadow-sm">
     <div class="card-header bg-secondary text-white">
         <h5 class="mb-0">Overzicht</h5>
     </div>
     <div class="card-body">
+        <!-- Datum -->
         <p>
-            <strong>Datum:</strong> @Model.Datum.Date
+            <strong>Datum:</strong> @Model.Datum.ToString("dd-MM-yyyy")
         </p>
+
+        <!-- Gekozen Beestjes -->
         <h6>Beestjes:</h6>
-        <ul class="list-group">
-            @if (Model.GekozenBeestjes != null)
+        <ul class="list-group mb-3">
+            @if (Model.GekozenBeestjes != null && Model.GekozenBeestjes.Any())
             {
                 @foreach (var beestje in Model.GekozenBeestjes)
                 {
-                    <li class="list-group-item">@beestje.Naam - €@beestje.Prijs</li>
+                    <li class="list-group-item">
+                        <strong>@beestje.Naam</strong> 
+                        - @beestje.Type 
+                        - €@beestje.Prijs.ToString("F2")
+                    </li>
                 }
             }
             else
             {
                 <p class="text-muted">Geen beestjes geselecteerd</p>
             }
+            <p>Prijs: @Model.TotalePrijs.ToString("F2")</p>
         </ul>
+        
+
+        <!-- Kortingen -->
+        <h6>Toegepaste Kortingen:</h6>
+        <ul class="list-group mb-3">
+            @if (Model.KortingDetails != null && Model.KortingDetails.Any())
+            {
+                @foreach (var korting in Model.KortingDetails)
+                {
+                    <li class="list-group-item">@korting</li>
+                }
+                <li class="list-group-item text-success">
+                    <strong>Totaal korting:</strong> @Model.KortingPercentage% 
+                </li>
+            }
+            else
+            {
+                <li class="list-group-item text-muted">Geen kortingen toegepast</li>
+            }
+        </ul>
+
+        <!-- Totaalprijs -->
+        <p>
+            <strong>Totaalprijs (incl. kortingen):</strong>
+            €@Model.UiteindelijkePrijs.ToString("F2")
+        </p>
     </div>
 </div>

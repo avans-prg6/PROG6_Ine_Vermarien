@@ -17,6 +17,10 @@ public class BoekingVM
     public decimal UiteindelijkePrijs { get; set; }
 
     public decimal KortingPercentage { get; set; }
+    
+    public decimal TotalePrijs => GekozenBeestjes?.Sum(b => b.Prijs) ?? 0;
+
+    public List<string> KortingDetails { get; set; } = new List<string>();
 
     public List<Beestje> BeschikbareBeestjes { get; set; }
 
@@ -48,11 +52,13 @@ public class Step2WrapperVM
 public class Step2VM
 {
     public List<Beestje>? BeschikbareBeestjes { get; set; }
-    
     public List<int> GeselecteerdeBeestjesIds { get; set; }
-    public decimal UiteindelijkePrijs { get; set; }
+    
+    public decimal TotalePrijs{ get; set; }
 
     public decimal KortingPercentage { get; set; }
+    public decimal UiteindelijkePrijs { get; set; } // met korting
+
 
 }
 
