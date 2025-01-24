@@ -1,0 +1,160 @@
+﻿@* @model PROG6_2425.ViewModels.BoekingVM *@
+@* *@
+@* <div class="container mt-4"> *@
+@*     <div class="row"> *@
+@*         <div class="col-md-8"> *@
+@*             <div class="card shadow-sm mb-4"> *@
+@*                 <div class="card-header bg-primary text-white"> *@
+@*                     @if (Model.CurrentStep == 1) *@
+@*                     { *@
+@*                         <h4 class="mb-0">Stap 1: Datum selecteren</h4> *@
+@*                     } *@
+@*                     else if (Model.CurrentStep == 2) *@
+@*                     { *@
+@*                         <h4 class="mb-0">Stap 2: Beestjes selecteren</h4> *@
+@*                     } *@
+@*                     else if (Model.CurrentStep == 3) *@
+@*                     { *@
+@*                         <h4 class="mb-0">Stap 3: Gegevens invullen</h4> *@
+@*                     } *@
+@*                     else if (Model.CurrentStep == 4) *@
+@*                     { *@
+@*                         <h4 class="mb-0">Stap 4: Overzicht</h4> *@
+@*                     } *@
+@*                 </div> *@
+@*                 <div class="card-body"> *@
+@*                     @if (Model.CurrentStep == 1) *@
+@*                     { *@
+@*                         <form asp-action="BoekingWizard" method="post"> *@
+@*                             <div class="form-group"> *@
+@*                                 <label for="Datum">Kies een datum:</label> *@
+@*                                 <input asp-for="Datum" type="date" class="form-control"/> *@
+@*                                 @Html.ValidationMessageFor(model => model.Datum, "", new { @class = "text-danger" }) *@
+@*                             </div> *@
+@*                             <input type="hidden" asp-for="CurrentStep" value="1"/> *@
+@*                             <button type="submit" class="btn btn-primary mt-3">Verder</button> *@
+@*                         </form> *@
+@*                     } *@
+@*                     else if (Model.CurrentStep == 2) *@
+@*                     { *@
+@*                         <form asp-action="BoekingWizard" method="post"> *@
+@*                             <input type="hidden" name="Datum" value="@Model.Datum"/> *@
+@*                             <h6>Selecteer beestjes:</h6> *@
+@*                             <span asp-validation-for="GeselecteerdeBeestjesIds" class="text-danger"></span> *@
+@*                             $1$ @Html.ValidationMessageFor(model => model.GeselecteerdeBeestjesIds, "", new { @class = "text-danger" }) #1# *@
+@* *@
+@* *@
+@*                             <div> *@
+@*                                 @foreach (var beestje in Model.BeschikbareBeestjes) *@
+@*                                 { *@
+@*                                     <li class="list-group-item"> *@
+@*                                         <input type="checkbox" value="@beestje.BeestjeId" name="GeselecteerdeBeestjesIds"/> *@
+@*                                         @beestje.Naam (€@beestje.Prijs) *@
+@*                                         $1$ @Html.ValidationMessageFor(model => model.GeselecteerdeBeestjesIds, "", new { @class = "text-danger" }) #1# *@
+@*                                     </li> *@
+@*                                 } *@
+@*                             </div> *@
+@*                             <input type="hidden" asp-for="CurrentStep" value="2"/> *@
+@*                             <input type="hidden" asp-for="@Model.UiteindelijkePrijs"/> *@
+@*                             <button type="submit" class="btn btn-primary mt-3">Verder</button> *@
+@*                         </form> *@
+@*                     } *@
+@*                     else if (Model.CurrentStep == 3) *@
+@*                     { *@
+@*                         <form asp-action="BoekingWizard" method="post"> *@
+@*                             <div class="form-group"> *@
+@*                                 <label for="Naam">Naam:</label> *@
+@*                                 <input asp-for="Naam" class="form-control" placeholder="Naam"/> *@
+@*                                 @Html.ValidationMessageFor(model => model.Naam, "", new { @class = "text-danger" }) *@
+@* *@
+@*                             </div> *@
+@*                             <div class="form-group mt-2"> *@
+@*                                 <label for="Adres">Adres:</label> *@
+@*                                 <input asp-for="Adres" class="form-control" placeholder="Adres"/> *@
+@*                                 @Html.ValidationMessageFor(model => model.Adres, "", new { @class = "text-danger" }) *@
+@* *@
+@*                             </div> *@
+@*                             <div class="form-group mt-2"> *@
+@*                                 <label for="Email">Email:</label> *@
+@*                                 <input asp-for="Email" class="form-control" placeholder="Email"/> *@
+@*                                 @Html.ValidationMessageFor(model => model.Email, "", new { @class = "text-danger" }) *@
+@* *@
+@*                             </div> *@
+@*                             <div class="form-group mt-2"> *@
+@*                                 <label for="Telefoonnummer">Telefoonnummer:</label> *@
+@*                                 <input asp-for="Telefoonnummer" class="form-control" placeholder="Telefoonnummer"/> *@
+@*                                 @Html.ValidationMessageFor(model => model.Telefoonnummer, "", new { @class = "text-danger" }) *@
+@* *@
+@*                             </div> *@
+@*                             <input type="hidden" asp-for="CurrentStep" value="3"/> *@
+@*                             <button type="submit" class="btn btn-primary mt-3">Verder</button> *@
+@*                         </form> *@
+@*                     } *@
+@*                     else if (Model.CurrentStep == 4) *@
+@*                     { *@
+@*                         <input type="hidden" asp-for="Datum" value="@Model.Datum"/> *@
+@*                         <h6>Boekingsoverzicht:</h6> *@
+@*                         <p> *@
+@*                             <strong>Datum:</strong> @Model.Datum *@
+@*                         </p> *@
+@*                         <p> *@
+@*                             <strong>Naam:</strong> @Model.Naam *@
+@*                         </p> *@
+@*                         <p> *@
+@*                             <strong>Adres:</strong> @Model.Adres *@
+@*                         </p> *@
+@*                         <p> *@
+@*                             <strong>Telefoonnummer:</strong> @Model.Telefoonnummer *@
+@*                         </p> *@
+@*                         <h6>Gekozen beestjes:</h6> *@
+@*                         <ul class="list-group"> *@
+@*                             @foreach (var beestje in Model.GekozenBeestjes) *@
+@*                             { *@
+@*                                 <li class="list-group-item">@beestje.Naam - €@beestje.Prijs</li> *@
+@*                             } *@
+@*                         </ul> *@
+@*                         <p class="mt-3"><strong>Totaalprijs:</strong> €@Model.UiteindelijkePrijs</p> *@
+@*                         <form asp-action="BoekingWizard" method="post"> *@
+@*                             <input type="hidden" asp-for="CurrentStep" value="4"/> *@
+@*                             <button type="submit" class="btn btn-success mt-3">Bevestigen</button> *@
+@*                         </form> *@
+@*                     } *@
+@*                 </div> *@
+@*             </div> *@
+@*         </div> *@
+@* *@
+@*         @if (Model.CurrentStep != 4) *@
+@*         { *@
+@*             <div class="col-md-4"> *@
+@*                 <div class="card shadow-sm"> *@
+@*                     <div class="card-header bg-secondary text-white"> *@
+@*                         <h5 class="mb-0">Overzicht</h5> *@
+@*                     </div> *@
+@*                     <div class="card-body"> *@
+@*                         <p> *@
+@*                             <strong>Datum:</strong> @Model.Datum *@
+@*                         </p> *@
+@*                         <h6>Beestjes:</h6> *@
+@*                         <ul class="list-group"> *@
+@*                             @if (Model.GekozenBeestjes != null) *@
+@*                             { *@
+@*                                 @foreach (var beestje in Model.GekozenBeestjes) *@
+@*                                 { *@
+@*                                     <li class="list-group-item">@beestje.Naam - €@beestje.Prijs</li> *@
+@*                                 } *@
+@*                             } *@
+@*                             else *@
+@*                             { *@
+@*                                 <p class="text-muted">Geen beestjes geselecteerd</p> *@
+@*                             } *@
+@*                         </ul> *@
+@*                     </div> *@
+@*                 </div> *@
+@*             </div> *@
+@*         } *@
+@*     </div> *@
+@* </div> *@
+@* *@
+@* @section Scripts { *@
+@*     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); } *@
+@* } *@

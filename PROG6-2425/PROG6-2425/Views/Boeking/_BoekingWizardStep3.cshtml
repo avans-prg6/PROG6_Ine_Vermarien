@@ -1,0 +1,41 @@
+﻿@model PROG6_2425.ViewModels.Step3WrapperVM
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <form asp-action="_BoekingWizardStep3" method="post">
+                <div class="form-group">
+                    <label for="Step3.Naam">Naam:</label>
+                    <input asp-for="Step3.Naam" class="form-control" placeholder="Naam"/>
+                    @Html.ValidationMessageFor(model => model.Step3.Naam, "", new { @class = "text-danger" })
+                </div>
+                <div class="form-group mt-2">
+                    <label for="Adres">Adres:</label>
+                    <input asp-for="Step3.Adres" class="form-control" placeholder="Adres"/>
+                    @Html.ValidationMessageFor(model => model.Step3.Adres, "", new { @class = "text-danger" })
+                </div>
+                <div class="form-group mt-2">
+                    <label for="Email">Email:</label>
+                    <input asp-for="Step3.Email" class="form-control" placeholder="Email"/>
+                    @Html.ValidationMessageFor(model => model.Step3.Email, "", new { @class = "text-danger" })
+                </div>
+                <div class="form-group mt-2">
+                    <label for="Telefoonnummer">Telefoonnummer:</label>
+                    <input asp-for="Step3.Telefoonnummer" class="form-control" placeholder="Telefoonnummer"/>
+                    @Html.ValidationMessageFor(model => model.Step3.Telefoonnummer, "", new { @class = "text-danger" })
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Verder</button>
+            </form>
+        </div>
+        <div class="col-md-4">
+            @await Html.PartialAsync("_BoekingWizardSidebar", Model.Overzicht)
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

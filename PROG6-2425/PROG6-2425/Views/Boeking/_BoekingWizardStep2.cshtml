@@ -1,0 +1,45 @@
+﻿@using Microsoft.IdentityModel.Tokens
+@model PROG6_2425.ViewModels.Step2WrapperVM
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+
+            <form asp-controller="Boeking" asp-action="_BoekingWizardStep2" method="post">
+
+                @foreach (var beestje in Model.Step2.BeschikbareBeestjes)
+                {
+                    <input type="hidden" name="BeschikbareBeestjes[@Model.Step2.BeschikbareBeestjes.IndexOf(beestje)].BeestjeId" value="@beestje.BeestjeId"/>
+                    <input type="hidden" name="BeschikbareBeestjes[@Model.Step2.BeschikbareBeestjes.IndexOf(beestje)].Naam" value="@beestje.Naam"/>
+                    <input type="hidden" name="BeschikbareBeestjes[@Model.Step2.BeschikbareBeestjes.IndexOf(beestje)].Type" value="@beestje.Type"/>
+                    <input type="hidden" name="BeschikbareBeestjes[@Model.Step2.BeschikbareBeestjes.IndexOf(beestje)].Prijs" value="@beestje.Prijs"/>
+                    <input type="hidden" name="BeschikbareBeestjes[@Model.Step2.BeschikbareBeestjes.IndexOf(beestje)].AfbeeldingUrl" value="@beestje.AfbeeldingUrl"/>
+                }
+                <h6>Selecteer beestjes:</h6>
+                @Html.ValidationMessageFor(model => model.Step2.GeselecteerdeBeestjesIds, "", new { @class = "text-danger" })
+                <div>
+                    @foreach (var beestje in Model.Step2.BeschikbareBeestjes)
+                    {
+                        <li class="list-group-item">
+                            <input type="checkbox" name="Step2.GeselecteerdeBeestjesIds" value="@beestje.BeestjeId"/>
+                            @beestje.Naam (€@beestje.Prijs)
+                            @beestje.Type
+                            @beestje.AfbeeldingUrl
+                        </li>
+                    }
+                </div>
+                <input type="hidden" asp-for="@Model.Step2.UiteindelijkePrijs"/>
+                <button type="submit" class="btn btn-primary mt-3">Verder</button>
+            </form>
+        </div>
+        <div class="col-md-4">
+            @await Html.PartialAsync("_BoekingWizardSidebar", Model.Overzicht)
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

@@ -1,0 +1,25 @@
+﻿@model PROG6_2425.ViewModels.BoekingVM
+<div class="card shadow-sm">
+    <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0">Overzicht</h5>
+    </div>
+    <div class="card-body">
+        <p>
+            <strong>Datum:</strong> @Model.Datum.Date
+        </p>
+        <h6>Beestjes:</h6>
+        <ul class="list-group">
+            @if (Model.GekozenBeestjes != null)
+            {
+                @foreach (var beestje in Model.GekozenBeestjes)
+                {
+                    <li class="list-group-item">@beestje.Naam - €@beestje.Prijs</li>
+                }
+            }
+            else
+            {
+                <p class="text-muted">Geen beestjes geselecteerd</p>
+            }
+        </ul>
+    </div>
+</div>

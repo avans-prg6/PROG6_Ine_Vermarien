@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using PROG6_2425.Data;
 using PROG6_2425.Models;
 using PROG6_2425.Repositories;
+using PROG6_2425.Validators;
+using PROG6_2425.ViewModels;
 
 public class Startup
 {
@@ -50,6 +52,7 @@ public class Startup
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<IBoekingRepository, BoekingRepository>();
         services.AddScoped<IBeestjeRepository, BeestjeRepository>();
+        services.AddScoped<IValidator<Step2VM>, BeestjeBoekingValidator>();
 
     }
 
