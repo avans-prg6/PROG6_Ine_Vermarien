@@ -99,7 +99,7 @@ public class BoekingController : Controller
             sessionModel.GebruikerId = user.Id;
         }
         
-        var wrapperVM = new Step2WrapperVM
+        Step2WrapperVM wrapperVM = new Step2WrapperVM
         {
             Step2 = model,
             Overzicht = sessionModel
@@ -112,6 +112,7 @@ public class BoekingController : Controller
         {
             Items =
             {
+                { "Datum", wrapperVM.Overzicht.Datum},
                 { "User", user },
                 { "Beestjes", model.BeschikbareBeestjes }
             }
@@ -123,18 +124,9 @@ public class BoekingController : Controller
         {
             ModelState.AddModelError("Step2." + result.MemberNames.First(), result.ErrorMessage);
         }
-
+        
         if (!ModelState.IsValid)
         {
-            foreach (var state in ModelState)
-            {
-                foreach (var error in state.Value.Errors)
-                {
-                    Console.WriteLine($"Key: {state.Key}, Error: {error.ErrorMessage}");
-                }
-            }
-           
-
             return PartialView(wrapperVM);
         }
         

@@ -13,7 +13,7 @@
         <div class="row">
             <!-- Stap 2 -->
             <div class="col-md-8">
-                @await Html.PartialAsync("_BoekingWizardStep2", new Step2VM())
+                @await Html.PartialAsync("_BoekingWizardStep2", new Step2WrapperVM())
             </div>
             <!-- Overzicht -->
             <div class="col-md-4">
@@ -29,7 +29,7 @@
         <div class="row">
             <!-- Stap 3 -->
             <div class="col-md-8">
-                @await Html.PartialAsync("_BoekingWizardStep3", new Step3VM())
+                @await Html.PartialAsync("_BoekingWizardStep3", new Step3WrapperVM())
             </div>
     
             <!-- Overzicht -->

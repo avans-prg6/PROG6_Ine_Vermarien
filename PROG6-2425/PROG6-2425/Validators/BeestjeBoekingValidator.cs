@@ -17,14 +17,14 @@ public class BeestjeBoekingValidator : IValidator<Step2VM>
 
     public IEnumerable<ValidationResult> Validate(Step2VM model, ValidationContext context)
     {
-        
         // Haal de gebruiker op met de bijbehorende KlantenKaart
-        var gebruiker = context.Items["User"] != null 
-            ? _userManager.Users.Include(u => u.KlantenKaart).FirstOrDefault(u => u.UserName == context.Items["User"].ToString()) 
+        var gebruiker = context.Items["User"] != null
+            ? _userManager.Users.Include(u => u.KlantenKaart)
+                .FirstOrDefault(u => u.UserName == context.Items["User"].ToString())
             : null;
         var klantenkaartType = gebruiker?.KlantenKaart?.KlantenKaartTypeId ?? 1;
 
-        var beestjes = context.Items["Beestjes"] as List<Beestje>;
+        var beestjes = context.Items["Beestjes"] as List<Beestje>; // Deze regel moet nog correct werken
 
         // Validatie: Selecteer minimaal één beestje
         if (model.GeselecteerdeBeestjesIds == null || !model.GeselecteerdeBeestjesIds.Any())
@@ -57,5 +57,76 @@ public class BeestjeBoekingValidator : IValidator<Step2VM>
                     new[] { nameof(model.GeselecteerdeBeestjesIds) });
             }
         }
+
+        // Roep de weekendvalidatie aan
+        var weekendValidationResult = ValidatePinguinOnWeekend(model, context, beestjes);
+        if (weekendValidationResult != null)
+        {
+            yield return weekendValidationResult;
+        }
+        var desertValidationResult = ValidateDesetAnimalsInWinter(model, context, beestjes);
+        if (desertValidationResult != null)
+        {
+            yield return desertValidationResult;
+        }
+
+    }
+
+    private ValidationResult ValidatePinguinOnWeekend(Step2VM model, ValidationContext context, List<Beestje> beestjes)
+    {
+        DateTime geboekteDatum = (DateTime)context.Items["Datum"];
+
+        // Controleer of de datum in het weekend valt
+        var isWeekend = geboekteDatum.DayOfWeek == DayOfWeek.Saturday || geboekteDatum.DayOfWeek == DayOfWeek.Sunday;
+        if (isWeekend)
+        {
+            if (model.GeselecteerdeBeestjesIds != null && model.GeselecteerdeBeestjesIds.Any())
+            {
+                foreach (var beestjeId in model.GeselecteerdeBeestjesIds)
+                {
+                    var beestje = beestjes?.FirstOrDefault(b => b.BeestjeId == beestjeId);
+                    if (beestje != null && beestje.Naam.Equals("Pinguïn", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return new ValidationResult("Dieren in pak werken alleen doordeweeks. Kies een andere datum.",
+                            new[] { nameof(model.GeselecteerdeBeestjesIds) });
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private ValidationResult ValidateDesetAnimalsInWinter(Step2VM model, ValidationContext context,
+        List<Beestje> beestjes)
+    {
+        DateTime geboekteDatum = (DateTime)context.Items["Datum"];
+
+        // Datum niet aanwezig
+        if (geboekteDatum == null)
+        {
+            return new ValidationResult("De geboekte datum mag niet leeg zijn.");
+        }
+
+        // wintermaanden
+        var maand = geboekteDatum.Month;
+        var isWinter = maand == 10 || maand == 11 || maand == 12 || maand == 1 || maand == 2;
+
+        if (isWinter)
+        {
+            // check per beestje
+            if (model.GeselecteerdeBeestjesIds != null && model.GeselecteerdeBeestjesIds.Any())
+            {
+                foreach (var beestjeId in model.GeselecteerdeBeestjesIds)
+                {
+                    var beestje = beestjes?.FirstOrDefault(b => b.BeestjeId == beestjeId);
+                    if (beestje.Type.Equals("Woestijn", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return new ValidationResult("Brrrr – Veelste koud voor woestijndieren in de winter.");
+                    }
+                }
+            }
+        }
+        return null;
     }
 }

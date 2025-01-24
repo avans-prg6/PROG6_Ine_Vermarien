@@ -5,8 +5,6 @@ using PROG6_2425.Models;
 
 namespace PROG6_2425.ViewModels;
 
-[NoPinguinOnWeekendsValidator]
-[NoDesertAnimalsInWinterValidator]
 public class BoekingVM
 {
     public int BoekingId { get; set; }
@@ -38,19 +36,20 @@ public class Step1VM
     public DateTime? Datum { get; set; }
 }
 
+
 public class Step2WrapperVM
 {
     public Step2VM Step2 { get; set; }
     public BoekingVM Overzicht { get; set; }
 }
 
+
+
 public class Step2VM
 {
     public List<Beestje>? BeschikbareBeestjes { get; set; }
-
+    
     public List<int> GeselecteerdeBeestjesIds { get; set; }
-    
-    
     public decimal UiteindelijkePrijs { get; set; }
 
     public decimal KortingPercentage { get; set; }
