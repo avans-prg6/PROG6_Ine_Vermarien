@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using PROG6_2425.Models;
 using PROG6_2425.Repositories;
@@ -36,12 +37,12 @@ public class BoekingController : Controller
     [HttpGet]
     public IActionResult BoekingWizard()
     {
-        var sessionModel = HttpContext.Session.Get<BoekingVM>(SessionKey) ?? new BoekingVM();
         return RedirectToAction("_BoekingWizardStep1");
     }
 
     public IActionResult _BoekingWizardSidebar()
     {
+        HttpContext.Session.Clear();
         var sessionModel = HttpContext.Session.Get<BoekingVM>(SessionKey) ?? new BoekingVM();
         return PartialView(sessionModel);
     }
@@ -80,7 +81,8 @@ public class BoekingController : Controller
 
         var step2 = new Step2VM
         {
-            BeschikbareBeestjes = _boekingRepository.GetBeestjesByDatum(sessionModel.Datum).ToList()
+            BeschikbareBeestjes = _boekingRepository.GetBeestjesByDatum(sessionModel.Datum).ToList(),
+            AlleBeestjes = _beestjeRepository.GetAll().ToList()
         };
 
         var model = new Step2WrapperVM
@@ -93,71 +95,79 @@ public class BoekingController : Controller
     }
 
     [HttpPost]
-public IActionResult _BoekingWizardStep2([Bind(Prefix = "Step2")] Step2VM model)
-{
-    var sessionModel = HttpContext.Session.Get<BoekingVM>(SessionKey);
-    var user = _userManager.GetUserAsync(User).Result;
-
-    if (user != null)
+    public IActionResult _BoekingWizardStep2([Bind(Prefix = "Step2")] Step2VM model)
     {
-        sessionModel.GebruikerId = user.Id;
-    }
+        var sessionModel = HttpContext.Session.Get<BoekingVM>(SessionKey);
+        var user = _userManager.GetUserAsync(User).Result;
 
-    Step2WrapperVM wrapperVM = new Step2WrapperVM
-    {
-        Step2 = model,
-        Overzicht = sessionModel
-    };
-
-    model.BeschikbareBeestjes = _boekingRepository.GetBeestjesByDatum(sessionModel.Datum).ToList();
-
-    // Validatie
-    var validator = HttpContext.RequestServices.GetService<IValidator<Step2VM>>();
-    var validationContext = new ValidationContext(model, null, null)
-    {
-        Items =
+        if (user != null)
         {
-            { "Datum", wrapperVM.Overzicht.Datum },
-            { "User", user },
-            { "Beestjes", model.BeschikbareBeestjes }
+            sessionModel.GebruikerId = user.Id;
         }
-    };
 
-    var customValidationResults = validator.Validate(wrapperVM.Step2, validationContext);
+        Step2WrapperVM wrapperVM = new Step2WrapperVM
+        {
+            Step2 = model,
+            Overzicht = sessionModel
+        };
 
-    foreach (var result in customValidationResults)
-    {
-        ModelState.AddModelError("Step2." + result.MemberNames.First(), result.ErrorMessage);
+        model.BeschikbareBeestjes = _boekingRepository.GetBeestjesByDatum(sessionModel.Datum).ToList();
+        model.AlleBeestjes = _beestjeRepository.GetAll().ToList();
+
+        if (model.GeselecteerdeBeestjesIds.IsNullOrEmpty() || !model.GeselecteerdeBeestjesIds.Any())
+        {
+            return PartialView(wrapperVM);
+        }
+        // Validatie
+        var validator = HttpContext.RequestServices.GetService<IValidator<Step2VM>>();
+        var validationContext = new ValidationContext(model, null, null)
+        {
+            Items =
+            {
+                { "Datum", wrapperVM.Overzicht.Datum },
+                { "User", user },
+                { "Beestjes", model.BeschikbareBeestjes }
+            }
+        };
+
+        var customValidationResults = validator.Validate(wrapperVM.Step2, validationContext);
+
+        if (!customValidationResults.ToList().IsNullOrEmpty())
+        {
+            foreach (var result in customValidationResults)
+            {
+                ModelState.AddModelError("Step2." + result.MemberNames.First(), result.ErrorMessage);
+            }
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return PartialView(wrapperVM);
+        }
+
+        // Update sessiemodel met gekozen beestjes
+        sessionModel.GekozenBeestjes = model.BeschikbareBeestjes
+            .Where(b => model.GeselecteerdeBeestjesIds.Contains(b.BeestjeId))
+            .ToList();
+
+        sessionModel.UiteindelijkePrijs = sessionModel.GekozenBeestjes.Sum(b => b.Prijs);
+
+        // Pas korting toe
+        var discountCalculator = HttpContext.RequestServices.GetService<DiscountService>();
+        var kortingPercentage = discountCalculator.CalculateTotalDiscount(sessionModel, user);
+
+        sessionModel.KortingPercentage = kortingPercentage;
+        sessionModel.UiteindelijkePrijs -= sessionModel.UiteindelijkePrijs * (kortingPercentage / 100);
+
+        // Update de prijzen in het huidige viewmodel
+        model.TotalePrijs = sessionModel.GekozenBeestjes.Sum(b => b.Prijs);
+        model.KortingPercentage = kortingPercentage;
+        model.UiteindelijkePrijs = sessionModel.UiteindelijkePrijs;
+
+        HttpContext.Session.Set(SessionKey, sessionModel);
+
+        return RedirectToAction("_BoekingWizardStep3");
     }
-
-    if (!ModelState.IsValid)
-    {
-        return PartialView(wrapperVM);
-    }
-
-    // Update sessiemodel met gekozen beestjes
-    sessionModel.GekozenBeestjes = model.BeschikbareBeestjes
-        .Where(b => model.GeselecteerdeBeestjesIds.Contains(b.BeestjeId))
-        .ToList();
-
-    sessionModel.UiteindelijkePrijs = sessionModel.GekozenBeestjes.Sum(b => b.Prijs);
-
-    // Pas korting toe
-    var discountCalculator = HttpContext.RequestServices.GetService<DiscountService>();
-    var kortingPercentage = discountCalculator.CalculateTotalDiscount(sessionModel, user);
-
-    sessionModel.KortingPercentage = kortingPercentage;
-    sessionModel.UiteindelijkePrijs -= sessionModel.UiteindelijkePrijs * (kortingPercentage / 100);
-
-    // Update de prijzen in het huidige viewmodel
-    model.TotalePrijs = sessionModel.GekozenBeestjes.Sum(b => b.Prijs);
-    model.KortingPercentage = kortingPercentage;
-    model.UiteindelijkePrijs = sessionModel.UiteindelijkePrijs;
-
-    HttpContext.Session.Set(SessionKey, sessionModel);
-
-    return RedirectToAction("_BoekingWizardStep3");
-}
 
     [HttpGet]
     public IActionResult _BoekingWizardStep3()
@@ -236,15 +246,14 @@ public IActionResult _BoekingWizardStep2([Bind(Prefix = "Step2")] Step2VM model)
         model.GekozenBeestjes = sessionModel.GekozenBeestjes;
         model.BeschikbareBeestjes = sessionModel.BeschikbareBeestjes;
         model.UiteindelijkePrijs = sessionModel.UiteindelijkePrijs;
+        model.KortingPercentage = sessionModel.KortingPercentage;
         model.Datum = sessionModel.Datum;
         model.Naam = sessionModel.Naam;
         model.Email = sessionModel.Email;
         model.Adres = sessionModel.Adres;
         model.Telefoonnummer = sessionModel.Telefoonnummer;
 
-        Console.WriteLine($"Datum: {model.Datum}, Naam: {model.Naam}, Adres: {model.Adres}");
 
-        // Controleer of het model geldig is
         if (!ModelState.IsValid)
         {
             foreach (var state in ModelState)
@@ -255,14 +264,12 @@ public IActionResult _BoekingWizardStep2([Bind(Prefix = "Step2")] Step2VM model)
                 }
             }
 
-            return View(sessionModel); // Zorg dat je sessiemodel teruggeeft
+            return View(sessionModel);
         }
 
-        // Maak een boeking aan en bevestig deze
         var boeking = CreateBoekingFromVM(model);
         Bevestigen(boeking);
 
-        // (Optioneel) Wis de sessie
         HttpContext.Session.Clear();
 
         return RedirectToAction("UserBoekingen");
@@ -286,6 +293,7 @@ public IActionResult _BoekingWizardStep2([Bind(Prefix = "Step2")] Step2VM model)
             Email = model.Email,
             Telefoonnummer = model.Telefoonnummer,
             UiteindelijkePrijs = model.GekozenBeestjes.Sum(b => b.Prijs),
+            KortingPercentage = model.KortingPercentage,
             Beestjes = model.GekozenBeestjes.Select(b => new BeestjeBoeking
             {
                 BeestjeId = b.BeestjeId,
@@ -352,6 +360,7 @@ public IActionResult _BoekingWizardStep2([Bind(Prefix = "Step2")] Step2VM model)
             Email = boeking.Email,
             Telefoonnummer = boeking.Telefoonnummer,
             UiteindelijkePrijs = boeking.UiteindelijkePrijs,
+            KortingPercentage = boeking.KortingPercentage,
             GekozenBeestjes = boeking.Beestjes.Select(bb => bb.Beestje).ToList()
         };
     }

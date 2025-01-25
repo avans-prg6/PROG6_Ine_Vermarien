@@ -6,10 +6,7 @@ namespace PROG6_2425.Services;
 public class DiscountService
 {
     private readonly Random _random = new Random();
-
-    /// <summary>
-    /// Berekent de totale korting voor een boeking.
-    /// </summary>
+    
     public decimal CalculateTotalDiscount(BoekingVM boeking, Account gebruiker)
     {
         boeking.KortingDetails.Clear();
@@ -59,7 +56,6 @@ public class DiscountService
         }
         totaleKorting += klantenkaartKorting;
 
-        Console.WriteLine("Totale korting " + totaleKorting);
         // Zorg dat de totale korting nooit meer dan 60% is
         return Math.Min(totaleKorting, 60);
     }

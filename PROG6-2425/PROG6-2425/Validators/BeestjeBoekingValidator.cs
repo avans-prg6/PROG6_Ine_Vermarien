@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using PROG6_2425.Models;
 using PROG6_2425.ViewModels;
 
@@ -25,13 +26,6 @@ public class BeestjeBoekingValidator : IValidator<Step2VM>
         var klantenkaartType = gebruiker?.KlantenKaart?.KlantenKaartTypeId ?? 1;
 
         var beestjes = context.Items["Beestjes"] as List<Beestje>; // Deze regel moet nog correct werken
-
-        // Validatie: Selecteer minimaal één beestje
-        if (model.GeselecteerdeBeestjesIds == null || !model.GeselecteerdeBeestjesIds.Any())
-        {
-            yield return new ValidationResult("Selecteer ten minste één beestje.",
-                new[] { nameof(model.GeselecteerdeBeestjesIds) });
-        }
 
         // Validatie: Maximaal aantal beestjes
         if (klantenkaartType == 1 && model.GeselecteerdeBeestjesIds.Count > 3)
@@ -68,6 +62,11 @@ public class BeestjeBoekingValidator : IValidator<Step2VM>
         if (desertValidationResult != null)
         {
             yield return desertValidationResult;
+        }
+        var nomnomresult = ValidateLeeuwIJsbeerAndBoerderij(model, beestjes);
+        if (nomnomresult != null)
+        {
+            yield return nomnomresult;
         }
 
     }
@@ -122,11 +121,41 @@ public class BeestjeBoekingValidator : IValidator<Step2VM>
                     var beestje = beestjes?.FirstOrDefault(b => b.BeestjeId == beestjeId);
                     if (beestje.Type.Equals("Woestijn", StringComparison.OrdinalIgnoreCase))
                     {
-                        return new ValidationResult("Brrrr – Veelste koud voor woestijndieren in de winter.");
+                        return new ValidationResult("Brrrr – Veelste koud voor woestijndieren in de winter.",
+                            new[] { nameof(model.GeselecteerdeBeestjesIds) });
+
                     }
                 }
             }
         }
         return null;
     }
+
+    private ValidationResult ValidateLeeuwIJsbeerAndBoerderij(Step2VM model, List<Beestje> beestjes)
+    {
+        bool hasLeeuwOrIJsbeer = model.GeselecteerdeBeestjesIds.Any(beestjeId =>
+        {
+            var beestje = beestjes?.FirstOrDefault(b => b.BeestjeId == beestjeId);
+            return beestje != null && (beestje.Naam.Equals("Leeuw", StringComparison.OrdinalIgnoreCase) || beestje.Naam.Equals("IJsbeer", StringComparison.OrdinalIgnoreCase));
+        });        
+        
+        if (hasLeeuwOrIJsbeer)
+        {
+            bool hasBoerderijdier = model.GeselecteerdeBeestjesIds.Any(beestjeId =>
+            {
+                var beestje = beestjes?.FirstOrDefault(b => b.BeestjeId == beestjeId);
+                return beestje != null && beestje.Type.Equals("Boerderij", StringComparison.OrdinalIgnoreCase);
+            });
+
+            if (hasBoerderijdier)
+            {
+                return new ValidationResult("Nom nom nom – Je kunt geen boerderijdieren boeken wanneer je een Leeuw of IJsbeer hebt geselecteerd.",
+                    new[] { nameof(model.GeselecteerdeBeestjesIds) });
+            }
+        }
+        
+        return null;
+    }
+
+    
 }

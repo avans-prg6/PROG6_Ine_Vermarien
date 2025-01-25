@@ -22,11 +22,11 @@
             @foreach (var boeking in Model)
             {
                 <tr>
-                    <td>@boeking.Datum</td>
+                    <td>@boeking.Datum.ToString("dd-MM-yyyy")</td>
                     <td>
                         @foreach (var beestje in boeking.GekozenBeestjes)
                         {
-                            <span>@beestje.Naam</span><br />
+                            <span>@beestje.Naam</span><br/>
                         }
                     </td>
                     <td>€@boeking.UiteindelijkePrijs</td>
