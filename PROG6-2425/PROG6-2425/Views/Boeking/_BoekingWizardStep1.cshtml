@@ -1,0 +1,29 @@
+﻿@using PROG6_2425.ViewModels
+@using Microsoft.EntityFrameworkCore.Metadata.Internal
+@model PROG6_2425.ViewModels.Step1VM
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            @await Html.PartialAsync("_PleaseLoginPartial")
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8">
+            <form asp-action="_BoekingWizardStep1" method="post">
+                <div class="form-group">
+                    <label for="Datum">Kies een datum:</label>
+                    <input asp-for="Datum" type="date" class="form-control"/>
+                    @Html.ValidationMessageFor(model => model.Datum, "", new { @class = "text-danger" })
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Verder</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

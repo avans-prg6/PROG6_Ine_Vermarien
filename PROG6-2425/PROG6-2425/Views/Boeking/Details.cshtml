@@ -1,0 +1,85 @@
+﻿@model PROG6_2425.ViewModels.BoekingVM
+
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Boekingsdetails</h2>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Boekingsoverzicht</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>
+                        <strong>Datum:</strong>
+                    </h6>
+                    <p>@Model.Datum.ToString("dd-MM-yyyy")</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <h6>
+                        <strong>Adres:</strong>
+                    </h6>
+                    <p>@Model.Adres</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>
+                        <strong>Email:</strong>
+                    </h6>
+                    <p>@Model.Email</p>
+                </div>
+                <div class="col-md-6">
+                    <h6>
+                        <strong>Telefoonnummer:</strong>
+                    </h6>
+                    <p>@Model.Telefoonnummer</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-secondary text-white">
+            <h4 class="mb-0">Gekozen Beestjes</h4>
+        </div>
+        <div class="card-body">
+            @if (Model.GekozenBeestjes.Any())
+            {
+                <div class="row">
+                    @foreach (var beestje in Model.GekozenBeestjes)
+                    {
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">@beestje.Naam</h5>
+                                    <p class="card-text">@beestje.Type</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-muted">Er zijn geen beestjes geselecteerd voor deze boeking.</p>
+            }
+            <div class="col-md-6">
+                <strong>Korting:</strong> @Model.KortingPercentage%
+                <h6>
+                    <strong>Totale Prijs (incl. korting):</strong>
+                </h6>
+                <p>€@Model.UiteindelijkePrijs.ToString("F2")</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4 text-center">
+        <a asp-action="UserBoekingen" class="btn btn-outline-secondary">Terug naar overzicht</a>
+        <form asp-action="Delete" asp-route-id="@Model.BoekingId" method="post" class="d-inline">
+            <button type="submit" class="btn btn-danger">Boeking Verwijderen</button>
+        </form>
+    </div>
+</div>

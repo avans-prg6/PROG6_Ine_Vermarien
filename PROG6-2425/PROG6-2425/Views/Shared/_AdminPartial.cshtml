@@ -1,0 +1,15 @@
+﻿<ul class="navbar-nav">
+    @if(User.IsInRole("Admin"))
+    {
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="CreateAccount">Accounts aanmaken</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="" asp-controller="Beestje" asp-action="Index">Beestjes beheren</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="Boeking" asp-action="GetAllBoekingen">Alle Boekingen</a>
+        </li>
+        
+    }
+</ul>

@@ -1,0 +1,10 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<Account> SignInManager
+
+@if (!SignInManager.IsSignedIn(User))
+{
+    <div class="alert alert-warning">
+        Je bent niet ingelogd. Heb je al een account? Log in om verder te gaan met de boeking.
+        <a href="@Url.Action("Login", "Account")" class="btn btn-warning mt-2">Log in</a>
+    </div>
+}

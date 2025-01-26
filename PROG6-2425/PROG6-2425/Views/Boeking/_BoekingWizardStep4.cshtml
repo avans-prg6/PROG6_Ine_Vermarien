@@ -1,0 +1,47 @@
+﻿@model PROG6_2425.ViewModels.BoekingVM
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="row">
+    <div class="col-md-12">
+        @await Html.PartialAsync("_PleaseLoginPartial")
+    </div>
+</div>
+<h6>Boekingsoverzicht:</h6>
+<p>
+    <strong>Datum:</strong> @Model.Datum.Date
+</p>
+<p>
+    <strong>Naam:</strong> @Model.Naam
+</p>
+<p>
+    <strong>Adres:</strong> @Model.Adres
+</p>
+<p>
+    <strong>Telefoonnummer:</strong> @Model.Telefoonnummer
+</p>
+<h6>Gekozen beestjes:</h6>
+<ul class="list-group">
+    @foreach (var beestje in Model.GekozenBeestjes)
+    {
+        <li class="list-group-item">
+            @beestje.Naam @beestje.Type
+            : €@beestje.Prijs
+        </li>
+    }
+</ul>
+<p class="mt-3"><strong>Totaalprijs:</strong> €@Model.UiteindelijkePrijs.ToString("F2")</p>
+<form asp-action="_BoekingWizardStep4" method="post">
+    <input type="hidden" asp-for="Datum" value="@Model.Datum"/>
+    <input type="hidden" asp-for="Naam" value="@Model.Naam"/>
+    <input type="hidden" asp-for="Email" value="@Model.Email"/>
+    <input type="hidden" asp-for="Adres" value="@Model.Adres"/>
+    <input type="hidden" asp-for="Telefoonnummer" value="@Model.Telefoonnummer"/>
+    <input type="hidden" asp-for="GekozenBeestjes" value="@Model.GekozenBeestjes"/>
+    <input type="hidden" asp-for="BeschikbareBeestjes" value="@Model.BeschikbareBeestjes"/>
+    <button type="submit" class="btn btn-success mt-3">Bevestigen</button>
+</form>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

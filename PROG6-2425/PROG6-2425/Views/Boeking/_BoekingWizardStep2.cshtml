@@ -1,0 +1,71 @@
+﻿@using Microsoft.IdentityModel.Tokens
+@model PROG6_2425.ViewModels.Step2WrapperVM
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            @await Html.PartialAsync("_PleaseLoginPartial")
+        </div>
+    </div>
+    <h2 class="text-center mb-4">Selecteer Beestjes</h2>
+
+    <div class="row">
+        <div class="col-md-8">
+            <form asp-controller="Boeking" asp-action="_BoekingWizardStep2" method="post">
+
+                @foreach (var beestje in Model.Step2.AlleBeestjes)
+                {
+                    <input type="hidden" name="BeschikbareBeestjes[@Model.Step2.BeschikbareBeestjes.IndexOf(beestje)].BeestjeId" value="@beestje.BeestjeId"/>
+                    <input type="hidden" name="BeschikbareBeestjes[@Model.Step2.BeschikbareBeestjes.IndexOf(beestje)].Naam" value="@beestje.Naam"/>
+                    <input type="hidden" name="BeschikbareBeestjes[@Model.Step2.BeschikbareBeestjes.IndexOf(beestje)].Type" value="@beestje.Type"/>
+                    <input type="hidden" name="BeschikbareBeestjes[@Model.Step2.BeschikbareBeestjes.IndexOf(beestje)].Prijs" value="@beestje.Prijs"/>
+                    <input type="hidden" name="BeschikbareBeestjes[@Model.Step2.BeschikbareBeestjes.IndexOf(beestje)].AfbeeldingUrl" value="@beestje.AfbeeldingUrl"/>
+                }
+
+                <h6>Selecteer de beestjes:</h6>
+                @Html.ValidationMessageFor(model => model.Step2.GeselecteerdeBeestjesIds, "", new { @class = "text-danger" })
+
+                <div class="row">
+                    @foreach (var beestje in Model.Step2.AlleBeestjes)
+                    {
+                        var isBeschikbaar = Model.Step2.BeschikbareBeestjes.Any(b => b.BeestjeId == beestje.BeestjeId);
+
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 @(!isBeschikbaar ? "bg-light text-muted" : "")">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">@beestje.Naam</h5>
+                                    <p class="card-text">@beestje.Type</p>
+                                    <p class="card-text">€@beestje.Prijs</p>
+
+                                    @if (isBeschikbaar)
+                                    {
+                                        <input type="checkbox" name="Step2.GeselecteerdeBeestjesIds" value="@beestje.BeestjeId"/>
+                                    }
+                                    else
+                                    {
+                                        <input type="checkbox" disabled/>
+                                        <small>Niet beschikbaar</small>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <input type="hidden" asp-for="@Model.Step2.UiteindelijkePrijs"/>
+                <button type="submit" class="btn btn-primary mt-3">Verder</button>
+            </form>
+        </div>
+
+        <div class="col-md-4">
+            @await Html.PartialAsync("_BoekingWizardSidebar", Model.Overzicht)
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}
