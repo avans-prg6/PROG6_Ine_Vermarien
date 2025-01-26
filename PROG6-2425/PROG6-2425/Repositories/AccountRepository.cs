@@ -65,7 +65,7 @@ public class AccountRepository : IAccountRepository
     {
         return await _userManager.FindByNameAsync(name);
     }
-
+    
     public async Task<Account?> GetUserByEmailAsync(string email)
     {
         return await _userManager.FindByEmailAsync(email);
