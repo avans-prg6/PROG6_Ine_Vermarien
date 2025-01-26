@@ -3,13 +3,10 @@ using PROG6_2425.ViewModels;
 
 namespace PROG6_2425.Services;
 
-public class DiscountService
+public class DiscountService : IDiscountService
 {
     private readonly Random _random = new Random();
-
-    /// <summary>
-    /// Berekent de totale korting voor een boeking.
-    /// </summary>
+    
     public decimal CalculateTotalDiscount(BoekingVM boeking, Account gebruiker)
     {
         boeking.KortingDetails.Clear();
@@ -59,12 +56,11 @@ public class DiscountService
         }
         totaleKorting += klantenkaartKorting;
 
-        Console.WriteLine("Totale korting " + totaleKorting);
         // Zorg dat de totale korting nooit meer dan 60% is
         return Math.Min(totaleKorting, 60);
     }
 
-    private decimal CalculateTypeDiscount(BoekingVM boeking)
+    public decimal CalculateTypeDiscount(BoekingVM boeking)
     {
         var korting = boeking.GekozenBeestjes
             .GroupBy(b => b.Type)
@@ -74,7 +70,7 @@ public class DiscountService
         return korting;
     }
 
-    private decimal CalculateEendDiscount(BoekingVM boeking)
+    public decimal CalculateEendDiscount(BoekingVM boeking)
     {
         bool heeftEend = boeking.GekozenBeestjes.Any(b => b.Naam.Equals("Eend", StringComparison.OrdinalIgnoreCase));
         if (heeftEend && _random.Next(1, 7) == 1) // 1 op 6 kans
@@ -85,9 +81,10 @@ public class DiscountService
         return 0;
     }
 
-    private decimal CalculateWeekdayDiscount(BoekingVM boeking)
+    public decimal CalculateWeekdayDiscount(BoekingVM boeking)
     {
         var dag = boeking.Datum.DayOfWeek;
+        Console.WriteLine("dag: " + dag);
         if (dag == DayOfWeek.Monday || dag == DayOfWeek.Tuesday)
         {
             return 15; // 15% korting
@@ -96,7 +93,7 @@ public class DiscountService
         return 0;
     }
 
-    private decimal CalculateLetterDiscount(BoekingVM boeking)
+    public decimal CalculateLetterDiscount(BoekingVM boeking)
     {
         if (boeking.GekozenBeestjes == null) return 0;
 
@@ -121,7 +118,7 @@ public class DiscountService
         return korting;
     }
 
-    private decimal CalculateKlantenKaartDiscount(Account gebruiker)
+    public decimal CalculateKlantenKaartDiscount(Account gebruiker)
     {
         if (gebruiker?.KlantenKaart != null)
         {

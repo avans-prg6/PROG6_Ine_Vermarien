@@ -37,6 +37,7 @@ public class BoekingVM
 public class Step1VM
 {
     [NoDateInPast] 
+    [Required]
     public DateTime? Datum { get; set; }
 }
 
@@ -52,7 +53,9 @@ public class Step2WrapperVM
 public class Step2VM
 {
     public List<Beestje>? BeschikbareBeestjes { get; set; }
+    [Required]
     public List<int> GeselecteerdeBeestjesIds { get; set; }
+    public List<Beestje>? AlleBeestjes { get; set; }
     
     public decimal TotalePrijs{ get; set; }
 

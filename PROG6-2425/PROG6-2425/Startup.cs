@@ -4,7 +4,6 @@ using PROG6_2425.Data;
 using PROG6_2425.Models;
 using PROG6_2425.Repositories;
 using PROG6_2425.Services;
-using PROG6_2425.Services.DiscountRules;
 using PROG6_2425.Validators;
 using PROG6_2425.ViewModels;
 
